@@ -37,7 +37,7 @@
         captures: 0,
         promotions: 0,
         kingWaves: 0,
-        promotedTypes: { knight: false, bishop: false, rook: false },
+        promotedTypes: { knight: false, bishop: false, rook: false, queen: false },
         counts: {
             white: { pawn: 0, knight: 0, bishop: 0, rook: 0, queen: 0, king: 0 },
             black: { pawn: 0, knight: 0, bishop: 0, rook: 0, queen: 0, king: 0 }
@@ -46,79 +46,160 @@
         timeLeft: null
     };
 
-    const GOALS = [
+    function getDifficulty(roundNum) {
+        const r = roundNum || (streak + 1);
+        if (r >= 9) return { tier: 2, key: 'master', label: 'Master', round: r, nextHint: '' };
+        if (r >= 5) return { tier: 1, key: 'hard', label: 'Hard', round: r, nextHint: 'Master @ Rnd 9' };
+        return { tier: 0, key: 'standard', label: 'Standard', round: r, nextHint: 'Hard @ Rnd 5' };
+    }
+
+    const GOAL_TEMPLATES = [
         {
             id: 'royal-promo',
             title: 'Royal Promotion',
-            desc: 'Trigger 4 promotions within 18 throws.',
-            maxThrows: 18,
-            target: 4,
-            getProgress: () => state.promotions,
-            getLabel: () => `${Math.min(state.promotions, 4)} / 4 promotions`,
-            getShort: () => `${Math.min(state.promotions, 4)}/4`
+            build: (t) => {
+                const target = [4, 6, 8][t];
+                const maxThrows = [18, 15, 14][t];
+                return {
+                    desc: `Trigger ${target} promotions within ${maxThrows} throws.`,
+                    maxThrows,
+                    target,
+                    getProgress: () => state.promotions,
+                    getLabel: () => `${Math.min(state.promotions, target)} / ${target} promotions`,
+                    getShort: () => `${Math.min(state.promotions, target)}/${target}`
+                };
+            }
         },
         {
             id: 'demolition',
             title: 'Demolition Derby',
-            desc: 'Capture 8 pieces within 18 throws.',
-            maxThrows: 18,
-            target: 8,
-            getProgress: () => state.captures,
-            getLabel: () => `${Math.min(state.captures, 8)} / 8 captures`,
-            getShort: () => `${Math.min(state.captures, 8)}/8`
+            build: (t) => {
+                const target = [8, 12, 16][t];
+                const maxThrows = [18, 15, 14][t];
+                return {
+                    desc: `Capture ${target} pieces within ${maxThrows} throws.`,
+                    maxThrows,
+                    target,
+                    getProgress: () => state.captures,
+                    getLabel: () => `${Math.min(state.captures, target)} / ${target} captures`,
+                    getShort: () => `${Math.min(state.captures, target)}/${target}`
+                };
+            }
         },
         {
             id: 'king-wave',
             title: 'King Wave',
-            desc: 'Hit a King to unleash a chain-reaction wave!',
-            target: 1,
-            getProgress: () => state.kingWaves,
-            getLabel: () => `${Math.min(state.kingWaves, 1)} / 1 king wave`,
-            getShort: () => `${Math.min(state.kingWaves, 1)}/1`
+            build: (t) => {
+                const target = [1, 2, 3][t];
+                const maxThrows = [null, 16, 15][t];
+                return {
+                    desc: maxThrows
+                        ? `Trigger ${target} King chain-reaction waves within ${maxThrows} throws.`
+                        : 'Hit a King to unleash a chain-reaction wave!',
+                    maxThrows,
+                    target,
+                    getProgress: () => state.kingWaves,
+                    getLabel: () => `${Math.min(state.kingWaves, target)} / ${target} ${target === 1 ? 'king wave' : 'king waves'}`,
+                    getShort: () => `${Math.min(state.kingWaves, target)}/${target}`
+                };
+            }
         },
         {
             id: 'double-queen',
             title: 'Queen Squad',
-            desc: 'Have at least 3 Queens on the board at once.',
-            target: 3,
-            getProgress: () => state.counts.white.queen + state.counts.black.queen,
-            getLabel: () => `${Math.min(state.counts.white.queen + state.counts.black.queen, 3)} / 3 queens`,
-            getShort: () => `${Math.min(state.counts.white.queen + state.counts.black.queen, 3)}/3`
+            build: (t) => {
+                const target = [3, 4, 5][t];
+                const timeLimit = [null, 22, 18][t];
+                return {
+                    desc: timeLimit
+                        ? `Have ${target} Queens on the board at once within ${timeLimit}s.`
+                        : `Have at least ${target} Queens on the board at once.`,
+                    timeLimit,
+                    target,
+                    getProgress: () => state.counts.white.queen + state.counts.black.queen,
+                    getLabel: () => `${Math.min(state.counts.white.queen + state.counts.black.queen, target)} / ${target} queens`,
+                    getShort: () => `${Math.min(state.counts.white.queen + state.counts.black.queen, target)}/${target}`
+                };
+            }
         },
         {
             id: 'blitz-capture',
             title: 'Blitz Capture',
-            desc: 'Capture 6 pieces in 12 seconds (starts on first throw).',
-            timeLimit: 12,
-            target: 6,
-            getProgress: () => state.captures,
-            getLabel: () => `${Math.min(state.captures, 6)} / 6 captures`,
-            getShort: () => `${Math.min(state.captures, 6)}/6`
+            build: (t) => {
+                const target = [6, 9, 12][t];
+                const timeLimit = [12, 10, 9][t];
+                return {
+                    desc: `Capture ${target} pieces in ${timeLimit} seconds (starts on first throw).`,
+                    timeLimit,
+                    target,
+                    getProgress: () => state.captures,
+                    getLabel: () => `${Math.min(state.captures, target)} / ${target} captures`,
+                    getShort: () => `${Math.min(state.captures, target)}/${target}`
+                };
+            }
         },
         {
             id: 'full-house',
             title: 'Promotion Ladder',
-            desc: 'Promote pieces into a Knight, a Bishop & a Rook.',
-            target: 3,
-            chips: ['Knight', 'Bishop', 'Rook'],
-            getChipsDone: () => [
-                state.promotedTypes.knight,
-                state.promotedTypes.bishop,
-                state.promotedTypes.rook
-            ],
-            getProgress: function () { return this.getChipsDone().filter(Boolean).length; },
-            getLabel: function () { return `${this.getProgress()} / 3 ranks`; },
-            getShort: function () { return `${this.getProgress()}/3`; }
+            build: (t) => {
+                const includeQueen = t >= 2;
+                const timeLimit = [null, 24, 20][t];
+                const chips = includeQueen ? ['Knight', 'Bishop', 'Rook', 'Queen'] : ['Knight', 'Bishop', 'Rook'];
+                const target = chips.length;
+                return {
+                    desc: includeQueen
+                        ? `Promote into Knight, Bishop, Rook & Queen in ${timeLimit}s.`
+                        : (timeLimit
+                            ? `Promote into Knight, Bishop & Rook within ${timeLimit}s.`
+                            : 'Promote pieces into a Knight, a Bishop & a Rook.'),
+                    timeLimit,
+                    target,
+                    chips,
+                    getChipsDone: () => includeQueen
+                        ? [state.promotedTypes.knight, state.promotedTypes.bishop, state.promotedTypes.rook, state.promotedTypes.queen]
+                        : [state.promotedTypes.knight, state.promotedTypes.bishop, state.promotedTypes.rook],
+                    getProgress: function () { return this.getChipsDone().filter(Boolean).length; },
+                    getLabel: function () { return `${this.getProgress()} / ${target} ranks`; },
+                    getShort: function () { return `${this.getProgress()}/${target}`; }
+                };
+            }
         },
         {
             id: 'promo-rush',
             title: 'Upgrade Rush',
-            desc: 'Land 5 promotions in 14 seconds (starts on first throw).',
-            timeLimit: 14,
-            target: 5,
-            getProgress: () => state.promotions,
-            getLabel: () => `${Math.min(state.promotions, 5)} / 5 promotions`,
-            getShort: () => `${Math.min(state.promotions, 5)}/5`
+            build: (t) => {
+                const target = [5, 7, 9][t];
+                const timeLimit = [14, 12, 11][t];
+                return {
+                    desc: `Land ${target} promotions in ${timeLimit} seconds (starts on first throw).`,
+                    timeLimit,
+                    target,
+                    getProgress: () => state.promotions,
+                    getLabel: () => `${Math.min(state.promotions, target)} / ${target} promotions`,
+                    getShort: () => `${Math.min(state.promotions, target)}/${target}`
+                };
+            }
+        },
+        {
+            id: 'surgical-strike',
+            title: 'Surgical Strike',
+            minTier: 1,
+            build: (t) => {
+                const capTarget = t >= 2 ? 10 : 7;
+                const promoTarget = t >= 2 ? 5 : 3;
+                const maxThrows = t >= 2 ? 13 : 14;
+                const target = capTarget + promoTarget;
+                return {
+                    desc: `Land ${capTarget} captures & ${promoTarget} promotions within ${maxThrows} throws.`,
+                    maxThrows,
+                    target,
+                    chips: [`${capTarget} Captures`, `${promoTarget} Promos`],
+                    getChipsDone: () => [state.captures >= capTarget, state.promotions >= promoTarget],
+                    getProgress: () => Math.min(state.captures, capTarget) + Math.min(state.promotions, promoTarget),
+                    getLabel: () => `Cap ${Math.min(state.captures, capTarget)}/${capTarget} · Pro ${Math.min(state.promotions, promoTarget)}/${promoTarget}`,
+                    getShort: () => `${Math.min(state.captures, capTarget) + Math.min(state.promotions, promoTarget)}/${target}`
+                };
+            }
         }
     ];
 
@@ -162,6 +243,10 @@
                     <span class="goal-title-wrap">${ICONS.target}<span class="goal-title" id="goal-title">Challenge</span></span>
                     <span class="goal-streak" id="goal-streak" title="Current streak / Best streak">${ICONS.flame}<span id="goal-streak-val">0</span><span class="goal-best" id="goal-best-val"></span></span>
                 </div>
+                <div class="goal-tier-row">
+                    <span class="goal-tier-badge" id="goal-tier-badge">Rnd 1 · Standard</span>
+                    <span class="goal-tier-hint" id="goal-tier-hint">Hard @ Rnd 5</span>
+                </div>
                 <p class="goal-desc" id="goal-desc"></p>
                 <div class="goal-chips" id="goal-chips" style="display:none;"></div>
                 <div class="goal-progress-track">
@@ -202,7 +287,7 @@
         hud.querySelector('#goal-collapse-btn').addEventListener('click', () => setCollapsed(!collapsed));
         hud.querySelector('#goal-mini-pill').addEventListener('click', () => setCollapsed(false));
         hud.querySelector('#goal-new-btn').addEventListener('click', () => startGoal());
-        hud.querySelector('#goal-retry-btn').addEventListener('click', () => startGoal(currentGoal));
+        hud.querySelector('#goal-retry-btn').addEventListener('click', () => startGoal(currentGoal ? currentGoal.id : null));
         hud.querySelector('#goal-download-btn').addEventListener('click', () => downloadScoreCard());
 
         return hud;
@@ -214,6 +299,8 @@
         collapseBtn: hud.querySelector('#goal-collapse-btn'),
         miniPill: hud.querySelector('#goal-mini-pill'),
         title: hud.querySelector('#goal-title'),
+        tierBadge: hud.querySelector('#goal-tier-badge'),
+        tierHint: hud.querySelector('#goal-tier-hint'),
         streak: hud.querySelector('#goal-streak-val'),
         best: hud.querySelector('#goal-best-val'),
         desc: hud.querySelector('#goal-desc'),
@@ -292,7 +379,7 @@
         const displayPlayer = playerName || 'Player';
         ctx.fillStyle = 'rgba(243, 241, 235, 0.68)';
         ctx.font = '500 17px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
-        ctx.fillText(`Completed  ·  ${displayPlayer}`, padX, 344);
+        ctx.fillText(`Completed  ·  ${displayPlayer}  ·  Rnd ${currentGoal.round} ${currentGoal.tierLabel}`, padX, 344);
 
         ctx.fillStyle = '#f5f3ed';
         ctx.font = '700 46px Georgia, "Times New Roman", serif';
@@ -373,21 +460,43 @@
         }
     }
 
-    function pickRandomGoal() {
-        const pool = GOALS.filter(g => g.id !== lastGoalId);
-        return pool[Math.floor(Math.random() * pool.length)] || GOALS[0];
+    function instantiateGoal(template, diff) {
+        const built = template.build(diff.tier);
+        return {
+            id: template.id,
+            title: template.title,
+            round: diff.round,
+            tier: diff.tier,
+            tierKey: diff.key,
+            tierLabel: diff.label,
+            nextHint: diff.nextHint,
+            ...built
+        };
     }
 
-    function startGoal(specificGoal = null) {
+    function pickRandomGoal(diff) {
+        const eligible = GOAL_TEMPLATES.filter(g => !g.minTier || diff.tier >= g.minTier);
+        const pool = eligible.filter(g => g.id !== lastGoalId);
+        const tpl = pool[Math.floor(Math.random() * pool.length)] || eligible[0];
+        return instantiateGoal(tpl, diff);
+    }
+
+    function startGoal(specificGoalId = null) {
         clearTimer();
-        currentGoal = specificGoal || pickRandomGoal();
+        const diff = getDifficulty();
+        if (specificGoalId) {
+            const tpl = GOAL_TEMPLATES.find(g => g.id === specificGoalId && (!g.minTier || diff.tier >= g.minTier));
+            currentGoal = tpl ? instantiateGoal(tpl, diff) : pickRandomGoal(diff);
+        } else {
+            currentGoal = pickRandomGoal(diff);
+        }
         lastGoalId = currentGoal.id;
         status = 'active';
         state.throws = 0;
         state.captures = 0;
         state.promotions = 0;
         state.kingWaves = 0;
-        state.promotedTypes = { knight: false, bishop: false, rook: false };
+        state.promotedTypes = { knight: false, bishop: false, rook: false, queen: false };
         state.startedAt = null;
         state.timeLeft = currentGoal.timeLimit || null;
         render();
@@ -466,6 +575,9 @@
         els.miniPill.classList.toggle('is-failed', status === 'failed');
 
         els.title.textContent = currentGoal.title;
+        els.tierBadge.textContent = `Rnd ${currentGoal.round} · ${currentGoal.tierLabel}`;
+        els.tierBadge.className = `goal-tier-badge${currentGoal.tier === 1 ? ' is-hard' : currentGoal.tier >= 2 ? ' is-master' : ''}`;
+        els.tierHint.textContent = currentGoal.nextHint || '';
         els.desc.textContent = currentGoal.desc;
         els.streak.textContent = String(streak);
         els.best.textContent = bestStreak > 0 ? `· Best ${bestStreak}` : '';
@@ -502,7 +614,9 @@
         els.miniPill.innerHTML = `${ICONS.target}<span>${currentGoal.title}: ${currentGoal.getShort()}${shortLimit}</span>`;
 
         if (status === 'won') {
-            els.banner.innerHTML = `${ICONS.check}<span>Completed</span>`;
+            const nextDiff = getDifficulty(streak + 1);
+            const tierUp = nextDiff.tier > currentGoal.tier ? ` · Next: ${nextDiff.label}` : '';
+            els.banner.innerHTML = `${ICONS.check}<span>Completed${tierUp}</span>`;
             els.retryBtn.style.display = 'none';
             els.downloadBtn.style.display = 'inline-flex';
             if (!dlResetId) els.downloadBtn.innerHTML = `${ICONS.download}<span>Card</span>`;

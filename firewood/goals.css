@@ -266,6 +266,47 @@
     margin-left: 2px;
 }
 
+.goal-tier-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-top: -3px;
+}
+
+.goal-tier-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 240, 220, 0.68);
+    font-variant-numeric: tabular-nums;
+}
+
+.goal-tier-badge.is-hard {
+    background: rgba(226, 182, 109, 0.12);
+    border-color: rgba(226, 182, 109, 0.32);
+    color: #e2b66d;
+}
+
+.goal-tier-badge.is-master {
+    background: rgba(229, 136, 124, 0.14);
+    border-color: rgba(229, 136, 124, 0.35);
+    color: #e5887c;
+}
+
+.goal-tier-hint {
+    font-size: 10.5px;
+    color: rgba(255, 238, 215, 0.48);
+    font-variant-numeric: tabular-nums;
+}
+
 .goal-desc {
     font-size: var(--goal-fs-body);
     line-height: 1.4;

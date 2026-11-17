@@ -115,6 +115,16 @@
     let gameStarted = false;
     let isBackScreenLocked = false; // Performance optimization: skip rendering back screen when locked
 
+    function countMatchedTiles() {
+        let matched = 0;
+        for (let r = 0; r < GRID_ROWS; r++) {
+            for (let c = 0; c < GRID_COLS; c++) {
+                if (gridState[r][c] === targetState[r][c]) matched++;
+            }
+        }
+        return matched;
+    }
+
     // ===== ANIMATION CONFLICT MANAGEMENT =====
     // Track active animations to allow cancellation when conflicting inputs occur
     // Row animations conflict with column animations (and vice versa)
@@ -277,6 +287,7 @@
     if (muteToggle) {
         muteToggle.addEventListener('click', () => {
             isMuted = !isMuted;
+            window.__gameMuted = isMuted;
             muteToggle.setAttribute('aria-pressed', String(isMuted));
             if (isMuted) {
                 PIXI.sound.muteAll();
@@ -1578,6 +1589,9 @@
         isGameActive = true;
         isAnimating = false; // Animation complete, allow input
         updateButtonCursors(); // Update cursors now that game is active
+        window.dispatchEvent(new CustomEvent('splitshift:start', {
+            detail: { matchedTiles: countMatchedTiles() }
+        }));
     }
 
     async function handleArrowPress(move) {
@@ -1607,7 +1621,12 @@
         updateMoveCounter();
         updateTileSprites(mainTiles, gridState);
 
-        if (checkWin()) {
+        const solved = checkWin();
+        window.dispatchEvent(new CustomEvent('splitshift:move', {
+            detail: { move, moves, matchedTiles: countMatchedTiles(), totalTiles: GRID_ROWS * GRID_COLS, won: solved }
+        }));
+
+        if (solved) {
             isGameActive = false;
             isAnimating = true; // Block New Puzzle button during win animation
             arrowButtons.forEach(name => updateButtonState(name, false, false));
@@ -1625,6 +1644,7 @@
 
     async function handleGiveUp() {
         if (!isGameActive || isSolving) return;
+        window.dispatchEvent(new CustomEvent('splitshift:giveup', { detail: { moves } }));
 
         isSolving = true;
         isGameActive = false;

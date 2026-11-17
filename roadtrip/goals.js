@@ -44,72 +44,155 @@
         timeLeft: null
     };
 
-    const GOALS = [
+    function getDifficulty(roundNum) {
+        const r = roundNum || (streak + 1);
+        if (r >= 9) return { tier: 2, key: 'master', label: 'Master', round: r, nextHint: '' };
+        if (r >= 5) return { tier: 1, key: 'hard', label: 'Hard', round: r, nextHint: 'Master @ Rnd 9' };
+        return { tier: 0, key: 'standard', label: 'Standard', round: r, nextHint: 'Hard @ Rnd 5' };
+    }
+
+    const GOAL_TEMPLATES = [
         {
             id: 'pileup',
             title: 'Highway Pileup',
-            desc: 'Trigger 12 car crashes in 10 seconds.',
-            timeLimit: 10,
-            target: 12,
-            getProgress: () => state.crashes,
-            getLabel: () => `${Math.min(state.crashes, 12)} / 12 crashes`,
-            getShort: () => `${Math.min(state.crashes, 12)}/12`
+            build: (t) => {
+                const target = [12, 17, 22][t];
+                const timeLimit = [10, 9, 8.5][t];
+                return {
+                    desc: `Trigger ${target} car crashes in ${timeLimit} seconds.`,
+                    timeLimit,
+                    target,
+                    getProgress: () => state.crashes,
+                    getLabel: () => `${Math.min(state.crashes, target)} / ${target} crashes`,
+                    getShort: () => `${Math.min(state.crashes, target)}/${target}`
+                };
+            }
         },
         {
             id: 'traffic-jam',
             title: 'Traffic Jam',
-            desc: 'Have 12 cars on the pasture at the same time.',
-            target: 12,
-            getProgress: () => state.maxActiveCars,
-            getLabel: () => `${Math.min(state.maxActiveCars, 12)} / 12 cars`,
-            getShort: () => `${Math.min(state.maxActiveCars, 12)}/12`
+            build: (t) => {
+                const target = [12, 16, 20][t];
+                const timeLimit = [null, 13, 11][t];
+                return {
+                    desc: timeLimit
+                        ? `Have ${target} cars on the pasture at once within ${timeLimit}s.`
+                        : `Have ${target} cars on the pasture at the same time.`,
+                    timeLimit,
+                    target,
+                    getProgress: () => state.maxActiveCars,
+                    getLabel: () => `${Math.min(state.maxActiveCars, target)} / ${target} cars`,
+                    getShort: () => `${Math.min(state.maxActiveCars, target)}/${target}`
+                };
+            }
         },
         {
             id: 'close-call',
             title: 'Close Call',
-            desc: 'Drop 5 cars right next to cows (near-miss dodge!).',
-            target: 5,
-            getProgress: () => state.cowDodges,
-            getLabel: () => `${Math.min(state.cowDodges, 5)} / 5 near-misses`,
-            getShort: () => `${Math.min(state.cowDodges, 5)}/5`
+            build: (t) => {
+                const target = [5, 7, 9][t];
+                const timeLimit = [null, 14, 12][t];
+                return {
+                    desc: timeLimit
+                        ? `Drop ${target} cars right next to cows within ${timeLimit}s.`
+                        : `Drop ${target} cars right next to cows (near-miss dodge!).`,
+                    timeLimit,
+                    target,
+                    getProgress: () => state.cowDodges,
+                    getLabel: () => `${Math.min(state.cowDodges, target)} / ${target} near-misses`,
+                    getShort: () => `${Math.min(state.cowDodges, target)}/${target}`
+                };
+            }
         },
         {
             id: 'far-horizon',
             title: 'Far Horizon',
-            desc: 'Land 8 crashes in the distant upper field.',
-            target: 8,
-            getProgress: () => state.farCrashes,
-            getLabel: () => `${Math.min(state.farCrashes, 8)} / 8 far crashes`,
-            getShort: () => `${Math.min(state.farCrashes, 8)}/8`
+            build: (t) => {
+                const target = [8, 12, 16][t];
+                const timeLimit = [null, 13, 11][t];
+                return {
+                    desc: timeLimit
+                        ? `Land ${target} crashes in the distant upper field in ${timeLimit}s.`
+                        : `Land ${target} crashes in the distant upper field.`,
+                    timeLimit,
+                    target,
+                    getProgress: () => state.farCrashes,
+                    getLabel: () => `${Math.min(state.farCrashes, target)} / ${target} far crashes`,
+                    getShort: () => `${Math.min(state.farCrashes, target)}/${target}`
+                };
+            }
         },
         {
             id: 'front-row',
             title: 'Front Row Chaos',
-            desc: 'Land 8 crashes close up in the lower field.',
-            target: 8,
-            getProgress: () => state.nearCrashes,
-            getLabel: () => `${Math.min(state.nearCrashes, 8)} / 8 close crashes`,
-            getShort: () => `${Math.min(state.nearCrashes, 8)}/8`
+            build: (t) => {
+                const target = [8, 12, 16][t];
+                const timeLimit = [null, 13, 11][t];
+                return {
+                    desc: timeLimit
+                        ? `Land ${target} crashes close up in the lower field in ${timeLimit}s.`
+                        : `Land ${target} crashes close up in the lower field.`,
+                    timeLimit,
+                    target,
+                    getProgress: () => state.nearCrashes,
+                    getLabel: () => `${Math.min(state.nearCrashes, target)} / ${target} close crashes`,
+                    getShort: () => `${Math.min(state.nearCrashes, target)}/${target}`
+                };
+            }
         },
         {
             id: 'demolition-rush',
             title: 'Demolition Rush',
-            desc: 'Trigger 22 crashes in 14 seconds.',
-            timeLimit: 14,
-            target: 22,
-            getProgress: () => state.crashes,
-            getLabel: () => `${Math.min(state.crashes, 22)} / 22 crashes`,
-            getShort: () => `${Math.min(state.crashes, 22)}/22`
+            build: (t) => {
+                const target = [22, 28, 35][t];
+                const timeLimit = [14, 12, 11][t];
+                return {
+                    desc: `Trigger ${target} crashes in ${timeLimit} seconds.`,
+                    timeLimit,
+                    target,
+                    getProgress: () => state.crashes,
+                    getLabel: () => `${Math.min(state.crashes, target)} / ${target} crashes`,
+                    getShort: () => `${Math.min(state.crashes, target)}/${target}`
+                };
+            }
         },
         {
             id: 'clean-drop',
             title: 'Pasture Respect',
-            desc: 'Drop 6 cars cleanly away from cows within 8 drops.',
-            maxDrops: 8,
-            target: 6,
-            getProgress: () => state.cleanDrops,
-            getLabel: () => `${Math.min(state.cleanDrops, 6)} / 6 clean drops`,
-            getShort: () => `${Math.min(state.cleanDrops, 6)}/6`
+            build: (t) => {
+                const target = [6, 8, 10][t];
+                const maxDrops = [8, 9, 10][t];
+                return {
+                    desc: maxDrops === target
+                        ? `Drop ${target} cars cleanly away from cows with zero misses.`
+                        : `Drop ${target} cars cleanly away from cows within ${maxDrops} drops.`,
+                    maxDrops,
+                    target,
+                    getProgress: () => state.cleanDrops,
+                    getLabel: () => `${Math.min(state.cleanDrops, target)} / ${target} clean drops`,
+                    getShort: () => `${Math.min(state.cleanDrops, target)}/${target}`
+                };
+            }
+        },
+        {
+            id: 'split-horizon',
+            title: 'Split Horizon',
+            minTier: 1,
+            build: (t) => {
+                const each = t >= 2 ? 9 : 6;
+                const timeLimit = t >= 2 ? 14 : 15;
+                const target = each * 2;
+                return {
+                    desc: `Land ${each} far crashes & ${each} close crashes in ${timeLimit}s.`,
+                    timeLimit,
+                    target,
+                    chips: [`Far (${each})`, `Close (${each})`],
+                    getChipsDone: () => [state.farCrashes >= each, state.nearCrashes >= each],
+                    getProgress: () => Math.min(state.farCrashes, each) + Math.min(state.nearCrashes, each),
+                    getLabel: () => `Far ${Math.min(state.farCrashes, each)}/${each} · Close ${Math.min(state.nearCrashes, each)}/${each}`,
+                    getShort: () => `${Math.min(state.farCrashes, each) + Math.min(state.nearCrashes, each)}/${target}`
+                };
+            }
         }
     ];
 
@@ -153,7 +236,12 @@
                     <span class="goal-title-wrap">${ICONS.target}<span class="goal-title" id="goal-title">Challenge</span></span>
                     <span class="goal-streak" id="goal-streak" title="Current streak / Best streak">${ICONS.flame}<span id="goal-streak-val">0</span><span class="goal-best" id="goal-best-val"></span></span>
                 </div>
+                <div class="goal-tier-row">
+                    <span class="goal-tier-badge" id="goal-tier-badge">Rnd 1 · Standard</span>
+                    <span class="goal-tier-hint" id="goal-tier-hint">Hard @ Rnd 5</span>
+                </div>
                 <p class="goal-desc" id="goal-desc"></p>
+                <div class="goal-chips" id="goal-chips" style="display:none;"></div>
                 <div class="goal-progress-track">
                     <div class="goal-progress-fill" id="goal-progress-fill"></div>
                 </div>
@@ -192,7 +280,7 @@
         hud.querySelector('#goal-collapse-btn').addEventListener('click', () => setCollapsed(!collapsed));
         hud.querySelector('#goal-mini-pill').addEventListener('click', () => setCollapsed(false));
         hud.querySelector('#goal-new-btn').addEventListener('click', () => startGoal());
-        hud.querySelector('#goal-retry-btn').addEventListener('click', () => startGoal(currentGoal));
+        hud.querySelector('#goal-retry-btn').addEventListener('click', () => startGoal(currentGoal ? currentGoal.id : null));
         hud.querySelector('#goal-download-btn').addEventListener('click', () => downloadScoreCard());
 
         return hud;
@@ -204,9 +292,12 @@
         collapseBtn: hud.querySelector('#goal-collapse-btn'),
         miniPill: hud.querySelector('#goal-mini-pill'),
         title: hud.querySelector('#goal-title'),
+        tierBadge: hud.querySelector('#goal-tier-badge'),
+        tierHint: hud.querySelector('#goal-tier-hint'),
         streak: hud.querySelector('#goal-streak-val'),
         best: hud.querySelector('#goal-best-val'),
         desc: hud.querySelector('#goal-desc'),
+        chips: hud.querySelector('#goal-chips'),
         fill: hud.querySelector('#goal-progress-fill'),
         progressText: hud.querySelector('#goal-progress-text'),
         limitText: hud.querySelector('#goal-limit-text'),
@@ -285,7 +376,7 @@
         const displayPlayer = playerName || 'Player';
         ctx.fillStyle = 'rgba(243, 241, 235, 0.68)';
         ctx.font = '500 17px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
-        ctx.fillText(`Completed  ·  ${displayPlayer}`, padX, 344);
+        ctx.fillText(`Completed  ·  ${displayPlayer}  ·  Rnd ${currentGoal.round} ${currentGoal.tierLabel}`, padX, 344);
 
         ctx.fillStyle = '#f5f3ed';
         ctx.font = '700 46px Georgia, "Times New Roman", serif';
@@ -366,14 +457,36 @@
         }
     }
 
-    function pickRandomGoal() {
-        const pool = GOALS.filter(g => g.id !== lastGoalId);
-        return pool[Math.floor(Math.random() * pool.length)] || GOALS[0];
+    function instantiateGoal(template, diff) {
+        const built = template.build(diff.tier);
+        return {
+            id: template.id,
+            title: template.title,
+            round: diff.round,
+            tier: diff.tier,
+            tierKey: diff.key,
+            tierLabel: diff.label,
+            nextHint: diff.nextHint,
+            ...built
+        };
     }
 
-    function startGoal(specificGoal = null) {
+    function pickRandomGoal(diff) {
+        const eligible = GOAL_TEMPLATES.filter(g => !g.minTier || diff.tier >= g.minTier);
+        const pool = eligible.filter(g => g.id !== lastGoalId);
+        const tpl = pool[Math.floor(Math.random() * pool.length)] || eligible[0];
+        return instantiateGoal(tpl, diff);
+    }
+
+    function startGoal(specificGoalId = null) {
         clearTimer();
-        currentGoal = specificGoal || pickRandomGoal();
+        const diff = getDifficulty();
+        if (specificGoalId) {
+            const tpl = GOAL_TEMPLATES.find(g => g.id === specificGoalId && (!g.minTier || diff.tier >= g.minTier));
+            currentGoal = tpl ? instantiateGoal(tpl, diff) : pickRandomGoal(diff);
+        } else {
+            currentGoal = pickRandomGoal(diff);
+        }
         lastGoalId = currentGoal.id;
         status = 'active';
         state = {
@@ -463,6 +576,9 @@
         els.miniPill.classList.toggle('is-failed', status === 'failed');
 
         els.title.textContent = currentGoal.title;
+        els.tierBadge.textContent = `Rnd ${currentGoal.round} · ${currentGoal.tierLabel}`;
+        els.tierBadge.className = `goal-tier-badge${currentGoal.tier === 1 ? ' is-hard' : currentGoal.tier >= 2 ? ' is-master' : ''}`;
+        els.tierHint.textContent = currentGoal.nextHint || '';
         els.desc.textContent = currentGoal.desc;
         els.streak.textContent = String(streak);
         els.best.textContent = bestStreak > 0 ? `· Best ${bestStreak}` : '';
@@ -471,6 +587,16 @@
         const pct = currentGoal.target > 0 ? Math.min(100, (progress / currentGoal.target) * 100) : 0;
         els.fill.style.width = `${pct}%`;
         els.progressText.textContent = currentGoal.getLabel();
+
+        if (currentGoal.chips) {
+            const doneFlags = currentGoal.getChipsDone();
+            els.chips.style.display = 'flex';
+            els.chips.innerHTML = currentGoal.chips
+                .map((c, i) => `<span class="goal-chip ${doneFlags[i] ? 'is-done' : ''}">${doneFlags[i] ? ICONS.check : ''}<span>${c}</span></span>`)
+                .join('');
+        } else {
+            els.chips.style.display = 'none';
+        }
 
         let shortLimit = '';
         if (currentGoal.timeLimit) {
@@ -489,7 +615,9 @@
         els.miniPill.innerHTML = `${ICONS.target}<span>${currentGoal.title}: ${currentGoal.getShort()}${shortLimit}</span>`;
 
         if (status === 'won') {
-            els.banner.innerHTML = `${ICONS.check}<span>Completed</span>`;
+            const nextDiff = getDifficulty(streak + 1);
+            const tierUp = nextDiff.tier > currentGoal.tier ? ` · Next: ${nextDiff.label}` : '';
+            els.banner.innerHTML = `${ICONS.check}<span>Completed${tierUp}</span>`;
             els.retryBtn.style.display = 'none';
             els.downloadBtn.style.display = 'inline-flex';
             if (!dlResetId) els.downloadBtn.innerHTML = `${ICONS.download}<span>Card</span>`;

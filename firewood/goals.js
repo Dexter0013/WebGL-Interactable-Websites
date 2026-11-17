@@ -41,63 +41,114 @@
         timeLeft: null
     };
 
-    const GOALS = [
+    function getDifficulty(roundNum) {
+        const r = roundNum || (streak + 1);
+        if (r >= 9) return { tier: 2, key: 'master', label: 'Master', round: r, nextHint: '' };
+        if (r >= 5) return { tier: 1, key: 'hard', label: 'Hard', round: r, nextHint: 'Master @ Rnd 9' };
+        return { tier: 0, key: 'standard', label: 'Standard', round: r, nextHint: 'Hard @ Rnd 5' };
+    }
+
+    const GOAL_TEMPLATES = [
         {
             id: 'quick-chop',
             title: 'Quick Chop',
-            desc: 'Split wood 5 times in 15 seconds.',
-            timeLimit: 15,
-            target: 5,
-            getProgress: () => state.splits,
-            getLabel: () => `${Math.min(state.splits, 5)} / 5 splits`,
-            getShort: () => `${Math.min(state.splits, 5)}/5`
+            build: (t) => {
+                const target = [5, 7, 9][t];
+                const timeLimit = [15, 14, 13][t];
+                return {
+                    desc: `Split wood ${target} times in ${timeLimit} seconds.`,
+                    timeLimit,
+                    target,
+                    getProgress: () => state.splits,
+                    getLabel: () => `${Math.min(state.splits, target)} / ${target} splits`,
+                    getShort: () => `${Math.min(state.splits, target)}/${target}`
+                };
+            }
         },
         {
             id: 'lumberjack-sprint',
             title: 'Lumberjack Sprint',
-            desc: 'Land 10 splits in 24 seconds.',
-            timeLimit: 24,
-            target: 10,
-            getProgress: () => state.splits,
-            getLabel: () => `${Math.min(state.splits, 10)} / 10 splits`,
-            getShort: () => `${Math.min(state.splits, 10)}/10`
+            build: (t) => {
+                const target = [10, 14, 18][t];
+                const timeLimit = [24, 22, 21][t];
+                return {
+                    desc: `Land ${target} splits in ${timeLimit} seconds.`,
+                    timeLimit,
+                    target,
+                    getProgress: () => state.splits,
+                    getLabel: () => `${Math.min(state.splits, target)} / ${target} splits`,
+                    getShort: () => `${Math.min(state.splits, target)}/${target}`
+                };
+            }
         },
         {
             id: 'fast-hands',
             title: 'Fast Hands',
-            desc: 'Chain 4 rapid splits (under 2.8s between each).',
-            target: 4,
-            getProgress: () => state.fastCombo,
-            getLabel: () => `${Math.min(state.fastCombo, 4)} / 4 combo`,
-            getShort: () => `${Math.min(state.fastCombo, 4)}/4`
+            build: (t) => {
+                const target = [4, 6, 8][t];
+                const comboWindowMs = [2800, 2100, 1650][t];
+                const secStr = (comboWindowMs / 1000).toFixed(comboWindowMs % 100 === 0 ? 1 : 2);
+                return {
+                    desc: `Chain ${target} rapid splits (under ${secStr}s between each).`,
+                    comboWindowMs,
+                    target,
+                    getProgress: () => state.fastCombo,
+                    getLabel: () => `${Math.min(state.fastCombo, target)} / ${target} combo`,
+                    getShort: () => `${Math.min(state.fastCombo, target)}/${target}`
+                };
+            }
         },
         {
             id: 'kindling-maker',
             title: 'Kindling Maker',
-            desc: 'Finish 4 logs cleanly into kindling splits.',
-            target: 4,
-            getProgress: () => state.bonusSplits,
-            getLabel: () => `${Math.min(state.bonusSplits, 4)} / 4 finishes`,
-            getShort: () => `${Math.min(state.bonusSplits, 4)}/4`
+            build: (t) => {
+                const target = [4, 6, 8][t];
+                const timeLimit = [null, 22, 21][t];
+                return {
+                    desc: timeLimit
+                        ? `Finish ${target} logs into kindling splits within ${timeLimit}s.`
+                        : `Finish ${target} logs cleanly into kindling splits.`,
+                    timeLimit,
+                    target,
+                    getProgress: () => state.bonusSplits,
+                    getLabel: () => `${Math.min(state.bonusSplits, target)} / ${target} finishes`,
+                    getShort: () => `${Math.min(state.bonusSplits, target)}/${target}`
+                };
+            }
         },
         {
             id: 'cord-cutter',
             title: 'Cord Cutter',
-            desc: 'Complete 12 total axe splits at your own pace.',
-            target: 12,
-            getProgress: () => state.splits,
-            getLabel: () => `${Math.min(state.splits, 12)} / 12 splits`,
-            getShort: () => `${Math.min(state.splits, 12)}/12`
+            build: (t) => {
+                const target = [12, 16, 20][t];
+                const timeLimit = [null, 26, 24][t];
+                return {
+                    desc: timeLimit
+                        ? `Complete ${target} total axe splits within ${timeLimit}s.`
+                        : `Complete ${target} total axe splits at your own pace.`,
+                    timeLimit,
+                    target,
+                    getProgress: () => state.splits,
+                    getLabel: () => `${Math.min(state.splits, target)} / ${target} splits`,
+                    getShort: () => `${Math.min(state.splits, target)}/${target}`
+                };
+            }
         },
         {
             id: 'speed-splitter',
             title: 'Speed Splitter',
-            desc: 'Split wood 7 times in 16 seconds!',
-            timeLimit: 16,
-            target: 7,
-            getProgress: () => state.splits,
-            getLabel: () => `${Math.min(state.splits, 7)} / 7 splits`,
-            getShort: () => `${Math.min(state.splits, 7)}/7`
+            build: (t) => {
+                const target = [7, 10, 13][t];
+                const timeLimit = [16, 15, 14.5][t];
+                return {
+                    desc: `Split wood ${target} times in ${timeLimit} seconds!`,
+                    timeLimit,
+                    target,
+                    getProgress: () => state.splits,
+                    getLabel: () => `${Math.min(state.splits, target)} / ${target} splits`,
+                    getShort: () => `${Math.min(state.splits, target)}/${target}`
+                };
+            }
         }
     ];
 
@@ -141,6 +192,10 @@
                     <span class="goal-title-wrap">${ICONS.target}<span class="goal-title" id="goal-title">Challenge</span></span>
                     <span class="goal-streak" id="goal-streak" title="Current streak / Best streak">${ICONS.flame}<span id="goal-streak-val">0</span><span class="goal-best" id="goal-best-val"></span></span>
                 </div>
+                <div class="goal-tier-row">
+                    <span class="goal-tier-badge" id="goal-tier-badge">Rnd 1 · Standard</span>
+                    <span class="goal-tier-hint" id="goal-tier-hint">Hard @ Rnd 5</span>
+                </div>
                 <p class="goal-desc" id="goal-desc"></p>
                 <div class="goal-progress-track">
                     <div class="goal-progress-fill" id="goal-progress-fill"></div>
@@ -180,7 +235,7 @@
         hud.querySelector('#goal-collapse-btn').addEventListener('click', () => setCollapsed(!collapsed));
         hud.querySelector('#goal-mini-pill').addEventListener('click', () => setCollapsed(false));
         hud.querySelector('#goal-new-btn').addEventListener('click', () => startGoal());
-        hud.querySelector('#goal-retry-btn').addEventListener('click', () => startGoal(currentGoal));
+        hud.querySelector('#goal-retry-btn').addEventListener('click', () => startGoal(currentGoal ? currentGoal.id : null));
         hud.querySelector('#goal-download-btn').addEventListener('click', () => downloadScoreCard());
 
         return hud;
@@ -192,6 +247,8 @@
         collapseBtn: hud.querySelector('#goal-collapse-btn'),
         miniPill: hud.querySelector('#goal-mini-pill'),
         title: hud.querySelector('#goal-title'),
+        tierBadge: hud.querySelector('#goal-tier-badge'),
+        tierHint: hud.querySelector('#goal-tier-hint'),
         streak: hud.querySelector('#goal-streak-val'),
         best: hud.querySelector('#goal-best-val'),
         desc: hud.querySelector('#goal-desc'),
@@ -269,7 +326,7 @@
         const displayPlayer = playerName || 'Player';
         ctx.fillStyle = 'rgba(243, 241, 235, 0.68)';
         ctx.font = '500 17px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
-        ctx.fillText(`Completed  ·  ${displayPlayer}`, padX, 344);
+        ctx.fillText(`Completed  ·  ${displayPlayer}  ·  Rnd ${currentGoal.round} ${currentGoal.tierLabel}`, padX, 344);
 
         ctx.fillStyle = '#f5f3ed';
         ctx.font = '700 46px Georgia, "Times New Roman", serif';
@@ -350,14 +407,36 @@
         }
     }
 
-    function pickRandomGoal() {
-        const pool = GOALS.filter(g => g.id !== lastGoalId);
-        return pool[Math.floor(Math.random() * pool.length)] || GOALS[0];
+    function instantiateGoal(template, diff) {
+        const built = template.build(diff.tier);
+        return {
+            id: template.id,
+            title: template.title,
+            round: diff.round,
+            tier: diff.tier,
+            tierKey: diff.key,
+            tierLabel: diff.label,
+            nextHint: diff.nextHint,
+            ...built
+        };
     }
 
-    function startGoal(specificGoal = null) {
+    function pickRandomGoal(diff) {
+        const eligible = GOAL_TEMPLATES.filter(g => !g.minTier || diff.tier >= g.minTier);
+        const pool = eligible.filter(g => g.id !== lastGoalId);
+        const tpl = pool[Math.floor(Math.random() * pool.length)] || eligible[0];
+        return instantiateGoal(tpl, diff);
+    }
+
+    function startGoal(specificGoalId = null) {
         clearTimer();
-        currentGoal = specificGoal || pickRandomGoal();
+        const diff = getDifficulty();
+        if (specificGoalId) {
+            const tpl = GOAL_TEMPLATES.find(g => g.id === specificGoalId && (!g.minTier || diff.tier >= g.minTier));
+            currentGoal = tpl ? instantiateGoal(tpl, diff) : pickRandomGoal(diff);
+        } else {
+            currentGoal = pickRandomGoal(diff);
+        }
         lastGoalId = currentGoal.id;
         status = 'active';
         state = {
@@ -440,6 +519,9 @@
         els.miniPill.classList.toggle('is-failed', status === 'failed');
 
         els.title.textContent = currentGoal.title;
+        els.tierBadge.textContent = `Rnd ${currentGoal.round} · ${currentGoal.tierLabel}`;
+        els.tierBadge.className = `goal-tier-badge${currentGoal.tier === 1 ? ' is-hard' : currentGoal.tier >= 2 ? ' is-master' : ''}`;
+        els.tierHint.textContent = currentGoal.nextHint || '';
         els.desc.textContent = currentGoal.desc;
         els.streak.textContent = String(streak);
         els.best.textContent = bestStreak > 0 ? `· Best ${bestStreak}` : '';
@@ -462,7 +544,9 @@
         els.miniPill.innerHTML = `${ICONS.target}<span>${currentGoal.title}: ${currentGoal.getShort()}${shortLimit}</span>`;
 
         if (status === 'won') {
-            els.banner.innerHTML = `${ICONS.check}<span>Completed</span>`;
+            const nextDiff = getDifficulty(streak + 1);
+            const tierUp = nextDiff.tier > currentGoal.tier ? ` · Next: ${nextDiff.label}` : '';
+            els.banner.innerHTML = `${ICONS.check}<span>Completed${tierUp}</span>`;
             els.retryBtn.style.display = 'none';
             els.downloadBtn.style.display = 'inline-flex';
             if (!dlResetId) els.downloadBtn.innerHTML = `${ICONS.download}<span>Card</span>`;
@@ -501,7 +585,8 @@
         const d = e.detail || {};
         state.splits++;
         if (d.isBonus) state.bonusSplits++;
-        if (state.lastSplitAt && (now - state.lastSplitAt) <= 2800) {
+        const comboWindow = (currentGoal && currentGoal.comboWindowMs) || 2800;
+        if (state.lastSplitAt && (now - state.lastSplitAt) <= comboWindow) {
             state.fastCombo++;
         } else {
             state.fastCombo = 1;

@@ -70,78 +70,134 @@
         lastTickAt: performance.now()
     };
 
-    const GOALS = [
+    function getDifficulty(roundNum) {
+        const r = roundNum || (streak + 1);
+        if (r >= 9) return { tier: 2, key: 'master', label: 'Master', round: r, nextHint: '' };
+        if (r >= 5) return { tier: 1, key: 'hard', label: 'Hard', round: r, nextHint: 'Master @ Rnd 9' };
+        return { tier: 0, key: 'standard', label: 'Standard', round: r, nextHint: 'Hard @ Rnd 5' };
+    }
+
+    const GOAL_TEMPLATES = [
         {
             id: 'routine-4',
             title: 'Dance Routine',
-            desc: 'Hit each pose in order by moving across the dance zone.',
-            init: () => { state.seq = generateSequence(4); state.seqIndex = 0; },
-            target: 4,
-            getProgress: () => state.seqIndex,
-            getLabel: () => `${state.seqIndex} / 4 poses`,
-            getShort: () => `${state.seqIndex}/4`,
-            getChips: () => state.seq.map((p, i) => ({
-                label: p.label,
-                icon: p.icon,
-                done: i < state.seqIndex,
-                current: i === state.seqIndex && status === 'active'
-            }))
+            build: (t) => {
+                const len = [4, 6, 8][t];
+                const timeLimit = [null, 13, 11.5][t];
+                return {
+                    desc: timeLimit
+                        ? `Hit ${len} poses in order within ${timeLimit}s.`
+                        : 'Hit each pose in order by moving across the dance zone.',
+                    timeLimit,
+                    init: () => { state.seq = generateSequence(len); state.seqIndex = 0; },
+                    target: len,
+                    getProgress: () => state.seqIndex,
+                    getLabel: () => `${state.seqIndex} / ${len} poses`,
+                    getShort: () => `${state.seqIndex}/${len}`,
+                    getChips: () => state.seq.map((p, i) => ({
+                        label: p.label,
+                        icon: p.icon,
+                        done: i < state.seqIndex,
+                        current: i === state.seqIndex && status === 'active'
+                    }))
+                };
+            }
         },
         {
             id: 'squat-reps',
             title: 'Spooky Squats',
-            desc: 'Pump 5 full squats (Top ↔ Bottom) in 12 seconds!',
-            timeLimit: 12,
-            target: 5,
-            getProgress: () => state.squatReps,
-            getLabel: () => `${Math.min(state.squatReps, 5)} / 5 squats`,
-            getShort: () => `${Math.min(state.squatReps, 5)}/5`
+            build: (t) => {
+                const target = [5, 8, 11][t];
+                const timeLimit = [12, 11, 10.5][t];
+                return {
+                    desc: `Pump ${target} full squats (Top ↔ Bottom) in ${timeLimit} seconds!`,
+                    timeLimit,
+                    target,
+                    getProgress: () => state.squatReps,
+                    getLabel: () => `${Math.min(state.squatReps, target)} / ${target} squats`,
+                    getShort: () => `${Math.min(state.squatReps, target)}/${target}`
+                };
+            }
         },
         {
             id: 'freeze-squat',
             title: 'Freeze Frame',
-            desc: 'Hold a Deep Squat (bottom zone) for 2.5 seconds.',
-            target: 2.5,
-            getProgress: () => state.holdSeconds,
-            getLabel: () => `${Math.min(state.holdSeconds, 2.5).toFixed(1)} / 2.5s held`,
-            getShort: () => `${Math.min(state.holdSeconds, 2.5).toFixed(1)}s`
+            build: (t) => {
+                const target = [2.5, 3.5, 4.5][t];
+                const timeLimit = [null, 7.5, 7][t];
+                const holdDecay = [1.5, 2.2, 3.0][t];
+                return {
+                    desc: timeLimit
+                        ? `Hold a Deep Squat (bottom zone) for ${target}s within ${timeLimit}s.`
+                        : `Hold a Deep Squat (bottom zone) for ${target} seconds.`,
+                    timeLimit,
+                    holdDecay,
+                    target,
+                    getProgress: () => state.holdSeconds,
+                    getLabel: () => `${Math.min(state.holdSeconds, target).toFixed(1)} / ${target}s held`,
+                    getShort: () => `${Math.min(state.holdSeconds, target).toFixed(1)}s`
+                };
+            }
         },
         {
             id: 'zoom-boogie',
             title: 'Zoom Boogie',
-            desc: 'Sweep full Left ↔ Right 5 times in 10 seconds!',
-            timeLimit: 10,
-            target: 5,
-            getProgress: () => state.zoomSweeps,
-            getLabel: () => `${Math.min(state.zoomSweeps, 5)} / 5 sweeps`,
-            getShort: () => `${Math.min(state.zoomSweeps, 5)}/5`
+            build: (t) => {
+                const target = [5, 8, 11][t];
+                const timeLimit = [10, 9.5, 9][t];
+                return {
+                    desc: `Sweep full Left ↔ Right ${target} times in ${timeLimit} seconds!`,
+                    timeLimit,
+                    target,
+                    getProgress: () => state.zoomSweeps,
+                    getLabel: () => `${Math.min(state.zoomSweeps, target)} / ${target} sweeps`,
+                    getShort: () => `${Math.min(state.zoomSweeps, target)}/${target}`
+                };
+            }
         },
         {
             id: 'club-energy',
             title: 'Club Energy',
-            desc: 'Keep the bones grooving to fill 100% energy in 8s!',
-            timeLimit: 8,
-            target: 100,
-            getProgress: () => Math.min(100, state.energy),
-            getLabel: () => `${Math.min(100, Math.round(state.energy))}% energy`,
-            getShort: () => `${Math.min(100, Math.round(state.energy))}%`
+            build: (t) => {
+                const timeLimit = [8, 7, 6.5][t];
+                const energyGain = [11, 9.5, 8.5][t];
+                const energyDecay = [0, 9, 15][t];
+                return {
+                    desc: energyDecay > 0
+                        ? `Fill 100% energy in ${timeLimit}s before it drains!`
+                        : `Keep the bones grooving to fill 100% energy in ${timeLimit}s!`,
+                    timeLimit,
+                    energyGain,
+                    energyDecay,
+                    target: 100,
+                    getProgress: () => Math.min(100, state.energy),
+                    getLabel: () => `${Math.min(100, Math.round(state.energy))}% energy`,
+                    getShort: () => `${Math.min(100, Math.round(state.energy))}%`
+                };
+            }
         },
         {
             id: 'routine-6',
             title: 'Pro Choreography',
-            desc: 'Nail a 6-pose dance sequence within 14 seconds!',
-            timeLimit: 14,
-            init: () => { state.seq = generateSequence(6); state.seqIndex = 0; },
-            target: 6,
-            getProgress: () => state.seqIndex,
-            getLabel: () => `${state.seqIndex} / 6 poses`,
-            getShort: () => `${state.seqIndex}/6`,
-            getChips: () => state.seq.map((p, i) => ({
-                label: p.label,
-                icon: p.icon,
-                done: i < state.seqIndex,
-                current: i === state.seqIndex && status === 'active'
-            }))
+            build: (t) => {
+                const len = [6, 8, 10][t];
+                const timeLimit = [14, 12.5, 12][t];
+                return {
+                    desc: `Nail a ${len}-pose dance sequence within ${timeLimit} seconds!`,
+                    timeLimit,
+                    init: () => { state.seq = generateSequence(len); state.seqIndex = 0; },
+                    target: len,
+                    getProgress: () => state.seqIndex,
+                    getLabel: () => `${state.seqIndex} / ${len} poses`,
+                    getShort: () => `${state.seqIndex}/${len}`,
+                    getChips: () => state.seq.map((p, i) => ({
+                        label: p.label,
+                        icon: p.icon,
+                        done: i < state.seqIndex,
+                        current: i === state.seqIndex && status === 'active'
+                    }))
+                };
+            }
         }
     ];
 
@@ -185,6 +241,10 @@
                     <span class="goal-title-wrap">${ICONS.target}<span class="goal-title" id="goal-title">Challenge</span></span>
                     <span class="goal-streak" id="goal-streak" title="Current streak / Best streak">${ICONS.flame}<span id="goal-streak-val">0</span><span class="goal-best" id="goal-best-val"></span></span>
                 </div>
+                <div class="goal-tier-row">
+                    <span class="goal-tier-badge" id="goal-tier-badge">Rnd 1 · Standard</span>
+                    <span class="goal-tier-hint" id="goal-tier-hint">Hard @ Rnd 5</span>
+                </div>
                 <p class="goal-desc" id="goal-desc"></p>
                 <div class="goal-chips" id="goal-chips" style="display:none;"></div>
                 <div class="goal-progress-track">
@@ -225,7 +285,7 @@
         hud.querySelector('#goal-collapse-btn').addEventListener('click', () => setCollapsed(!collapsed));
         hud.querySelector('#goal-mini-pill').addEventListener('click', () => setCollapsed(false));
         hud.querySelector('#goal-new-btn').addEventListener('click', () => startGoal());
-        hud.querySelector('#goal-retry-btn').addEventListener('click', () => startGoal(currentGoal));
+        hud.querySelector('#goal-retry-btn').addEventListener('click', () => startGoal(currentGoal ? currentGoal.id : null));
         hud.querySelector('#goal-download-btn').addEventListener('click', () => downloadScoreCard());
 
         return hud;
@@ -237,6 +297,8 @@
         collapseBtn: hud.querySelector('#goal-collapse-btn'),
         miniPill: hud.querySelector('#goal-mini-pill'),
         title: hud.querySelector('#goal-title'),
+        tierBadge: hud.querySelector('#goal-tier-badge'),
+        tierHint: hud.querySelector('#goal-tier-hint'),
         streak: hud.querySelector('#goal-streak-val'),
         best: hud.querySelector('#goal-best-val'),
         desc: hud.querySelector('#goal-desc'),
@@ -315,7 +377,7 @@
         const displayPlayer = playerName || 'Player';
         ctx.fillStyle = 'rgba(243, 241, 235, 0.68)';
         ctx.font = '500 17px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
-        ctx.fillText(`Completed  ·  ${displayPlayer}`, padX, 344);
+        ctx.fillText(`Completed  ·  ${displayPlayer}  ·  Rnd ${currentGoal.round} ${currentGoal.tierLabel}`, padX, 344);
 
         ctx.fillStyle = '#f5f3ed';
         ctx.font = '700 46px Georgia, "Times New Roman", serif';
@@ -424,14 +486,19 @@
 
             if (currentGoal.id === 'freeze-squat') {
                 if (state.ny >= 0.75) {
+                    if (currentGoal.timeLimit && !state.startedAt) state.startedAt = now;
                     state.holdSeconds += dt;
                     if (state.holdSeconds >= currentGoal.target) {
                         winGoal();
                         return;
                     }
                 } else {
-                    state.holdSeconds = Math.max(0, state.holdSeconds - dt * 1.5);
+                    const decayRate = currentGoal.holdDecay || 1.5;
+                    state.holdSeconds = Math.max(0, state.holdSeconds - dt * decayRate);
                 }
+                render();
+            } else if (currentGoal.id === 'club-energy' && currentGoal.energyDecay > 0 && state.energy > 0) {
+                state.energy = Math.max(0, state.energy - dt * currentGoal.energyDecay);
                 render();
             }
 
@@ -447,13 +514,35 @@
         }, 80);
     }
 
-    function pickRandomGoal() {
-        const pool = GOALS.filter(g => g.id !== lastGoalId);
-        return pool[Math.floor(Math.random() * pool.length)] || GOALS[0];
+    function instantiateGoal(template, diff) {
+        const built = template.build(diff.tier);
+        return {
+            id: template.id,
+            title: template.title,
+            round: diff.round,
+            tier: diff.tier,
+            tierKey: diff.key,
+            tierLabel: diff.label,
+            nextHint: diff.nextHint,
+            ...built
+        };
     }
 
-    function startGoal(specificGoal = null) {
-        currentGoal = specificGoal || pickRandomGoal();
+    function pickRandomGoal(diff) {
+        const eligible = GOAL_TEMPLATES.filter(g => !g.minTier || diff.tier >= g.minTier);
+        const pool = eligible.filter(g => g.id !== lastGoalId);
+        const tpl = pool[Math.floor(Math.random() * pool.length)] || eligible[0];
+        return instantiateGoal(tpl, diff);
+    }
+
+    function startGoal(specificGoalId = null) {
+        const diff = getDifficulty();
+        if (specificGoalId) {
+            const tpl = GOAL_TEMPLATES.find(g => g.id === specificGoalId && (!g.minTier || diff.tier >= g.minTier));
+            currentGoal = tpl ? instantiateGoal(tpl, diff) : pickRandomGoal(diff);
+        } else {
+            currentGoal = pickRandomGoal(diff);
+        }
         lastGoalId = currentGoal.id;
         status = 'active';
         state.seq = [];
@@ -515,6 +604,9 @@
         els.miniPill.classList.toggle('is-failed', status === 'failed');
 
         els.title.textContent = currentGoal.title;
+        els.tierBadge.textContent = `Rnd ${currentGoal.round} · ${currentGoal.tierLabel}`;
+        els.tierBadge.className = `goal-tier-badge${currentGoal.tier === 1 ? ' is-hard' : currentGoal.tier >= 2 ? ' is-master' : ''}`;
+        els.tierHint.textContent = currentGoal.nextHint || '';
         els.desc.textContent = currentGoal.desc;
         els.streak.textContent = String(streak);
         els.best.textContent = bestStreak > 0 ? `· Best ${bestStreak}` : '';
@@ -547,7 +639,9 @@
         els.miniPill.innerHTML = `${ICONS.target}<span>${currentGoal.title}: ${currentGoal.getShort()}${shortLimit}</span>`;
 
         if (status === 'won') {
-            els.banner.innerHTML = `${ICONS.check}<span>Completed</span>`;
+            const nextDiff = getDifficulty(streak + 1);
+            const tierUp = nextDiff.tier > currentGoal.tier ? ` · Next: ${nextDiff.label}` : '';
+            els.banner.innerHTML = `${ICONS.check}<span>Completed${tierUp}</span>`;
             els.retryBtn.style.display = 'none';
             els.downloadBtn.style.display = 'inline-flex';
             if (!dlResetId) els.downloadBtn.innerHTML = `${ICONS.download}<span>Card</span>`;
@@ -601,7 +695,8 @@
 
             if (currentGoal.id === 'club-energy') {
                 const normDist = dist / Math.max(300, Math.min(window.innerWidth, window.innerHeight));
-                state.energy = Math.min(100, state.energy + normDist * 11);
+                const gain = currentGoal.energyGain || 11;
+                state.energy = Math.min(100, state.energy + normDist * gain);
                 if (state.energy >= 100) {
                     winGoal();
                     return;
