@@ -4,30 +4,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>screen toys</title>
+    <meta name="description" content="Explore a 3D pixel medieval castle where each tower, courtyard, and bridge hosts an interactive WebGL game.">
+    <meta name="theme-color" content="#161925">
+    <title>Interactive Castle — WebGL Games</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <header class="header">
-        <p id="intro-copy" class="intro-copy"></p>
-        <h1 class="logo">screen toys</h1>
+    <canvas id="bg-canvas" aria-label="Interactive 3D medieval pixel castle"></canvas>
+    <div class="bg-vignette" aria-hidden="true"></div>
+
+    <!-- Top-Left Minimal Brand -->
+    <header class="top-bar">
+        <div class="brand">
+            <div class="brand-kicker">
+                <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 20h20"/><path d="M5 20V8l4 2 3-5 3 5 4-2v12"/></svg>
+                <span>Castle Hub</span>
+            </div>
+            <h1 class="brand-title">Interactive Keep</h1>
+            <p class="brand-hint">Select a section of the castle to inspect &amp; play</p>
+        </div>
+
+        <div class="top-actions">
+            <button id="overview-btn" class="overview-btn is-hidden" type="button">
+                <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                <span>Full Castle</span>
+            </button>
+            <button id="time-btn" class="time-btn" type="button" title="Switch time of day (Auto / Day / Dusk / Night)" aria-label="Time of day">
+                <span id="time-icon"></span>
+                <span id="time-label" class="time-label">Cycle</span>
+            </button>
+            <a class="creator-link" href="https://shapiro500.com" target="_blank" rel="noopener noreferrer" title="Original creator — shapiro500.com" aria-label="Original creator website">
+                <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                <span class="creator-label">Original</span>
+            </a>
+        </div>
     </header>
 
-    <main>
-        <div id="toy-grid" class="toy-grid">
-            <!-- Grid items will be injected here -->
+    <!-- Dynamic 3D-Anchored Pins Projected onto Castle Sections -->
+    <div id="castle-pins" class="castle-pins" aria-label="Castle game locations"></div>
+
+    <!-- Selected Game Preview Panel -->
+    <aside id="game-panel" class="game-panel is-hidden" aria-live="polite">
+        <div class="panel-media">
+            <video id="panel-video" autoplay loop muted playsinline></video>
+            <span class="panel-tag" id="panel-tag"></span>
+            <button id="panel-close" class="panel-close" type="button" aria-label="Back to full castle" title="Close (Esc)">
+                <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
         </div>
-    </main>
+        <div class="panel-body">
+            <div class="panel-section" id="panel-section"></div>
+            <h2 class="panel-title" id="panel-title"></h2>
+            <p class="panel-desc" id="panel-desc"></p>
+            <div class="panel-actions">
+                <div class="panel-nav">
+                    <button id="panel-prev" class="panel-nav-btn" type="button" aria-label="Previous castle section" title="Previous (←)">
+                        <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    <button id="panel-next" class="panel-nav-btn" type="button" aria-label="Next castle section" title="Next (→)">
+                        <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                </div>
+                <a id="panel-play" class="panel-play" href="#">
+                    <span>Play Game</span>
+                    <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </a>
+            </div>
+        </div>
+    </aside>
 
-    <div class="flamingo-container">
-        <img src="assets/flamingoSquad.gif" alt="Flamingo Squad" class="flamingo-squad">
-    </div>
+    <!-- Bottom Castle Map Dock (quick jump on mobile & desktop) -->
+    <nav id="castle-dock" class="castle-dock" aria-label="Castle sections"></nav>
 
-    <script src="main.js"></script>
+    <script type="module" src="main.js"></script>
 </body>
 
 </html>
