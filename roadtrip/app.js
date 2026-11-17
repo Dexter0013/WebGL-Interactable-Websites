@@ -72,6 +72,8 @@ const app = new PIXI.Application({
     resizeTo: window,
     backgroundColor: 0x000000,
 });
+app.view.style.position = 'relative';
+app.view.style.zIndex = '1';
 document.body.appendChild(app.view);
 app.ticker.maxFPS = 60;
 
@@ -173,7 +175,7 @@ async function setup() {
     assetsToLoad.push({ alias: 'bg', src: 'assets/sounds/bg.mp3' });
     // bg sound attribution: 20101026Cows.wav by daveincamas (https://freesound.org/s/107577/) + Highway Driving by officialfourge (https://freesound.org/s/366250/) -- License: Attribution 4.0
 
-    const totalAssets = assetsToLoad.length;
+    const totalAssets = assetsToLoad.length + 1;
     let loadedCount = 0;
 
     progressText.text = `Loading 0/${totalAssets} assets`;
@@ -185,6 +187,18 @@ async function setup() {
         loadedCount++;
         progressText.text = `Loading ${loadedCount}/${totalAssets} assets`;
     }
+
+    // Pre-fetch background loop video into an in-memory Blob URL so looping never stalls on HTTP range requests
+    let videoBlobUrl = null;
+    try {
+        const resp = await fetch(VIDEO_SRC);
+        if (resp.ok) {
+            const blob = await resp.blob();
+            videoBlobUrl = URL.createObjectURL(blob);
+        }
+    } catch (_) { }
+    loadedCount++;
+    progressText.text = `Loading ${loadedCount}/${totalAssets} assets`;
 
     // Done loading
     app.ticker.remove(loaderTicker);
@@ -205,12 +219,61 @@ async function setup() {
 
     const cowSheets = [sheet1, sheet2];
     const videoElement = document.createElement('video');
-    videoElement.src = VIDEO_SRC;
     videoElement.muted = true;
+    videoElement.defaultMuted = true;
+    videoElement.autoplay = true;
     videoElement.preload = 'auto';
     videoElement.playsInline = true;
     videoElement.loop = true;
-    videoElement.play().catch(e => console.warn("Autoplay blocked, waiting for interaction."));
+    videoElement.setAttribute('muted', '');
+    videoElement.setAttribute('playsinline', '');
+    videoElement.setAttribute('webkit-playsinline', '');
+    // Full-size behind the opaque Pixi canvas so Chrome never throttles hardware video decoding
+    videoElement.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:-1;';
+    videoElement.src = videoBlobUrl || VIDEO_SRC;
+    document.body.appendChild(videoElement);
+
+    // Wait briefly for first frame before starting
+    if (videoElement.readyState < 2) {
+        await new Promise((resolve) => {
+            const done = () => {
+                videoElement.removeEventListener('loadeddata', done);
+                videoElement.removeEventListener('canplay', done);
+                resolve();
+            };
+            videoElement.addEventListener('loadeddata', done);
+            videoElement.addEventListener('canplay', done);
+            setTimeout(done, 2500);
+        });
+    }
+
+    let lastPlayAttemptAt = 0;
+    const ensureVideoPlaying = (forceNudge = false) => {
+        if (document.hidden) return;
+        const now = performance.now();
+        if (!forceNudge && now - lastPlayAttemptAt < 600) return;
+        lastPlayAttemptAt = now;
+        if (forceNudge && videoElement.duration && isFinite(videoElement.duration)) {
+            const nextT = videoElement.currentTime + 0.08;
+            videoElement.currentTime = nextT >= videoElement.duration - 0.1 ? 0 : nextT;
+        }
+        if (videoElement.paused || forceNudge) {
+            videoElement.play().catch(() => { });
+        }
+    };
+
+    videoElement.addEventListener('ended', () => {
+        videoElement.currentTime = 0;
+        ensureVideoPlaying(true);
+    });
+    videoElement.addEventListener('stalled', () => ensureVideoPlaying(true));
+    videoElement.addEventListener('pause', () => {
+        if (!document.hidden) ensureVideoPlaying();
+    });
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) ensureVideoPlaying(true);
+    });
+    videoElement.play().catch(() => console.warn("Autoplay blocked, waiting for interaction."));
 
     // --- START BG AUDIO ---
     if (typeof PIXI !== 'undefined' && PIXI.sound) {
@@ -220,7 +283,16 @@ async function setup() {
         });
     }
 
-    const videoTexture = PIXI.Texture.from(videoElement);
+    // Use a dedicated 2D canvas -> PIXI Texture instead of PixiJS VideoResource
+    // (avoids VideoResource calling video.load() and requestVideoFrameCallback stalls)
+    const videoCanvas = document.createElement('canvas');
+    videoCanvas.width = VIDEO_NATIVE_WIDTH;
+    videoCanvas.height = VIDEO_NATIVE_HEIGHT;
+    const videoCtx = videoCanvas.getContext('2d', { alpha: false });
+    if (videoElement.readyState >= 2) {
+        videoCtx.drawImage(videoElement, 0, 0, VIDEO_NATIVE_WIDTH, VIDEO_NATIVE_HEIGHT);
+    }
+    const videoTexture = PIXI.Texture.from(videoCanvas);
     const videoSprite = new PIXI.Sprite(videoTexture);
     videoLayer.addChild(videoSprite);
 
@@ -532,6 +604,7 @@ async function setup() {
 
     // --- INPUTS ---
     const resumeAudio = () => {
+        ensureVideoPlaying();
         if (typeof PIXI === 'undefined' || !PIXI.sound) return;
 
         try {
@@ -545,15 +618,14 @@ async function setup() {
             if (!PIXI.sound.find('bg').isPlaying) {
                 PIXI.sound.play('bg', { loop: true, volume: 0.5 });
             }
-            // Also ensure video starts if blocked
-            if (videoElement.paused) videoElement.play().catch(() => { });
         } catch (e) {
             console.warn("Audio resume failed:", e);
         }
     };
 
     window.addEventListener('pointerdown', (e) => {
-        if (e.target && e.target.closest && e.target.closest('#goal-hud, .mute-pill')) return;
+        ensureVideoPlaying();
+        if (e.target && e.target.closest && e.target.closest('#goal-hud, .mute-pill, .castle-back-link')) return;
         resumeAudio();
         isPointerDown = true;
         const localPos = worldContainer.toLocal(new PIXI.Point(e.clientX, e.clientY));
@@ -667,11 +739,36 @@ async function setup() {
     resize();
 
     // --- MASTER TICKER (30 FPS) ---
+    let lastVideoTime = -1;
+    let videoStallTicks = 0;
+
     app.ticker.add(() => {
         logicTickCounter++;
         if (logicTickCounter >= ticksPerFrame) {
             if (videoElement.readyState >= 2) {
-                videoTexture.update();
+                if (videoElement.paused) {
+                    ensureVideoPlaying();
+                } else {
+                    const dur = videoElement.duration;
+                    const curT = videoElement.currentTime;
+                    // Proactively wrap slightly before EOF to avoid Chromium's loop-end freeze
+                    if (dur && isFinite(dur) && curT >= dur - 0.06) {
+                        videoElement.currentTime = 0;
+                        lastVideoTime = 0;
+                        videoStallTicks = 0;
+                    } else if (Math.abs(curT - lastVideoTime) < 0.0005) {
+                        videoStallTicks++;
+                        if (videoStallTicks >= 25) {
+                            videoStallTicks = 0;
+                            ensureVideoPlaying(true);
+                        }
+                    } else {
+                        videoStallTicks = 0;
+                        lastVideoTime = curT;
+                    }
+                }
+                videoCtx.drawImage(videoElement, 0, 0, VIDEO_NATIVE_WIDTH, VIDEO_NATIVE_HEIGHT);
+                videoTexture.baseTexture.update();
             }
 
             if (isPointerDown) {

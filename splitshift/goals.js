@@ -644,6 +644,18 @@
         failGoal('GAVE UP!');
     });
 
+    const backLink = document.createElement('a');
+    backLink.className = `castle-back-link${document.getElementById('mute-toggle') ? ' has-mute' : ''}`;
+    backLink.href = '../';
+    backLink.title = 'Back to Castle';
+    backLink.setAttribute('aria-label', 'Back to Castle');
+    backLink.setAttribute('data-desktop-ui', 'true');
+    backLink.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span>Castle</span>';
+    ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'click'].forEach(evt => {
+        backLink.addEventListener(evt, e => e.stopPropagation());
+    });
+    document.body.appendChild(backLink);
+
     if (mode === 'challenge') startGoal();
     else render();
 })();

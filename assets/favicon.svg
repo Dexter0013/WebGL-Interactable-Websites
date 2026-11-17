@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges">
+  <rect width="16" height="16" rx="3" fill="#161925"/>
+  <!-- Keep & Towers -->
+  <rect x="2" y="6" width="3" height="8" fill="#6b7280"/>
+  <rect x="11" y="6" width="3" height="8" fill="#6b7280"/>
+  <rect x="5" y="4" width="6" height="10" fill="#828a99"/>
+  <!-- Battlements -->
+  <rect x="2" y="5" width="1" height="1" fill="#828a99"/>
+  <rect x="4" y="5" width="1" height="1" fill="#828a99"/>
+  <rect x="11" y="5" width="1" height="1" fill="#828a99"/>
+  <rect x="13" y="5" width="1" height="1" fill="#828a99"/>
+  <rect x="6" y="3" width="4" height="1" fill="#5c3a3e"/>
+  <rect x="7" y="2" width="2" height="1" fill="#5c3a3e"/>
+  <!-- Glowing windows & gate -->
+  <rect x="7" y="6" width="2" height="2" fill="#d6a45c"/>
+  <rect x="3" y="8" width="1" height="2" fill="#d6a45c"/>
+  <rect x="12" y="8" width="1" height="2" fill="#d6a45c"/>
+  <rect x="7" y="11" width="2" height="3" fill="#3a281d"/>
+  <!-- Grass base -->
+  <rect x="1" y="14" width="14" height="1" fill="#2d4032"/>
+</svg>

@@ -1,0 +1,23 @@
+{
+  "trailingSlash": true,
+  "headers": [
+    {
+      "source": "/(.*)\\.(webp|jpg|jpeg|png|svg|ico|mp4|mp3|wav|ogg|wasm|ktx2|glb)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.(html|js|css)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    }
+  ]
+}
