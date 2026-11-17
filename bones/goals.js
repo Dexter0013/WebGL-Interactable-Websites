@@ -1,13 +1,20 @@
 (function () {
+    const GAME_NAME = 'Spooky Bones';
+    const GAME_SLUG = 'spooky-bones';
     const STORAGE_KEY = 'bones_mode';
     const COLLAPSE_KEY = 'bones_hud_collapsed';
+    const BEST_KEY = 'bones_best_streak';
+    const NAME_KEY = 'screentoys_player_name';
     let mode = localStorage.getItem(STORAGE_KEY) || 'challenge';
     let collapsed = localStorage.getItem(COLLAPSE_KEY) === '1';
+    let playerName = localStorage.getItem(NAME_KEY) || '';
     let streak = 0;
+    let bestStreak = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0;
     let currentGoal = null;
     let lastGoalId = null;
     let status = 'active';
     let tickId = null;
+    let dlResetId = null;
 
     const ICONS = {
         infinity: '<svg class="goal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 12c-2-2.67-4-4-6-4a4 4 0 1 0 0 8c2 0 4-1.33 6-4Zm0 0c2 2.67 4 4 6 4a4 4 0 0 0 0-8c-2 0-4 1.33-6 4Z"/></svg>',
@@ -25,7 +32,8 @@
         arrowUp: '<svg class="goal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>',
         arrowDown: '<svg class="goal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
         arrowLeft: '<svg class="goal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>',
-        arrowRightSm: '<svg class="goal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>'
+        arrowRightSm: '<svg class="goal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>',
+        download: '<svg class="goal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>'
     };
 
     const POSES = [
@@ -175,7 +183,7 @@
             <div class="goal-card" id="goal-card">
                 <div class="goal-header">
                     <span class="goal-title-wrap">${ICONS.target}<span class="goal-title" id="goal-title">Challenge</span></span>
-                    <span class="goal-streak" id="goal-streak">${ICONS.flame}<span>0</span></span>
+                    <span class="goal-streak" id="goal-streak" title="Current streak / Best streak">${ICONS.flame}<span id="goal-streak-val">0</span><span class="goal-best" id="goal-best-val"></span></span>
                 </div>
                 <p class="goal-desc" id="goal-desc"></p>
                 <div class="goal-chips" id="goal-chips" style="display:none;"></div>
@@ -187,15 +195,19 @@
                     <span class="goal-meta-item" id="goal-limit-text"></span>
                 </div>
                 <div class="goal-banner" id="goal-banner"></div>
+                <div class="goal-name-row">
+                    <input type="text" class="goal-name-input" id="goal-player-name" maxlength="24" placeholder="Your name for score card (optional)" autocomplete="off" />
+                </div>
                 <div class="goal-actions">
                     <button type="button" class="goal-action-btn" id="goal-retry-btn" style="display:none;">${ICONS.rotateCcw}<span>Retry</span></button>
+                    <button type="button" class="goal-action-btn is-share" id="goal-download-btn" style="display:none;" aria-label="Download score card" title="Download PNG score card">${ICONS.download}<span>Card</span></button>
                     <button type="button" class="goal-action-btn" id="goal-new-btn">${ICONS.shuffle}<span>New Goal</span></button>
                 </div>
             </div>
         `;
         document.body.appendChild(hud);
 
-        ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'click'].forEach(evt => {
+        ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'click', 'keydown', 'keyup', 'keypress'].forEach(evt => {
             hud.addEventListener(evt, e => e.stopPropagation());
         });
 
@@ -203,10 +215,18 @@
             btn.addEventListener('click', () => setMode(btn.dataset.mode));
         });
 
+        const nameInput = hud.querySelector('#goal-player-name');
+        nameInput.value = playerName;
+        nameInput.addEventListener('input', () => {
+            playerName = nameInput.value.trim();
+            localStorage.setItem(NAME_KEY, playerName);
+        });
+
         hud.querySelector('#goal-collapse-btn').addEventListener('click', () => setCollapsed(!collapsed));
         hud.querySelector('#goal-mini-pill').addEventListener('click', () => setCollapsed(false));
         hud.querySelector('#goal-new-btn').addEventListener('click', () => startGoal());
         hud.querySelector('#goal-retry-btn').addEventListener('click', () => startGoal(currentGoal));
+        hud.querySelector('#goal-download-btn').addEventListener('click', () => downloadScoreCard());
 
         return hud;
     }
@@ -217,17 +237,151 @@
         collapseBtn: hud.querySelector('#goal-collapse-btn'),
         miniPill: hud.querySelector('#goal-mini-pill'),
         title: hud.querySelector('#goal-title'),
-        streak: hud.querySelector('#goal-streak span'),
+        streak: hud.querySelector('#goal-streak-val'),
+        best: hud.querySelector('#goal-best-val'),
         desc: hud.querySelector('#goal-desc'),
         chips: hud.querySelector('#goal-chips'),
         fill: hud.querySelector('#goal-progress-fill'),
         progressText: hud.querySelector('#goal-progress-text'),
         limitText: hud.querySelector('#goal-limit-text'),
         banner: hud.querySelector('#goal-banner'),
+        nameInput: hud.querySelector('#goal-player-name'),
         retryBtn: hud.querySelector('#goal-retry-btn'),
+        downloadBtn: hud.querySelector('#goal-download-btn'),
         newBtn: hud.querySelector('#goal-new-btn'),
         modeBtns: hud.querySelectorAll('.goal-mode-btn')
     };
+
+    function loadImage(src) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => resolve(null);
+            img.src = src;
+        });
+    }
+
+    function drawCover(ctx, source, sw, sh, W, H) {
+        if (!sw || !sh) return;
+        const scale = Math.max(W / sw, H / sh);
+        const dw = sw * scale;
+        const dh = sh * scale;
+        ctx.drawImage(source, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    }
+
+    async function downloadScoreCard() {
+        if (!currentGoal) return;
+        const W = 1200, H = 630;
+        const canvas = document.createElement('canvas');
+        canvas.width = W;
+        canvas.height = H;
+        const ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = '#121312';
+        ctx.fillRect(0, 0, W, H);
+
+        const bgImg = await loadImage('./og.png');
+        if (bgImg) {
+            ctx.save();
+            ctx.filter = 'saturate(0.55) brightness(0.76)';
+            drawCover(ctx, bgImg, bgImg.naturalWidth, bgImg.naturalHeight, W, H);
+            ctx.restore();
+        }
+
+        const scrim = ctx.createLinearGradient(0, 0, 0, H);
+        scrim.addColorStop(0, 'rgba(13, 14, 13, 0.34)');
+        scrim.addColorStop(0.5, 'rgba(13, 14, 13, 0.54)');
+        scrim.addColorStop(1, 'rgba(11, 12, 11, 0.9)');
+        ctx.fillStyle = scrim;
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.strokeStyle = 'rgba(243, 241, 235, 0.22)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(30.5, 30.5, W - 61, H - 61);
+
+        const padX = 72;
+        const dateStr = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+
+        ctx.fillStyle = 'rgba(243, 241, 235, 0.78)';
+        ctx.font = '600 15px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+        ctx.fillText(GAME_NAME.toUpperCase(), padX, 78);
+
+        ctx.textAlign = 'right';
+        ctx.fillStyle = 'rgba(243, 241, 235, 0.62)';
+        ctx.font = '400 15px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+        ctx.fillText(dateStr, W - padX, 78);
+        ctx.textAlign = 'left';
+
+        const displayPlayer = playerName || 'Player';
+        ctx.fillStyle = 'rgba(243, 241, 235, 0.68)';
+        ctx.font = '500 17px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+        ctx.fillText(`Completed  ·  ${displayPlayer}`, padX, 344);
+
+        ctx.fillStyle = '#f5f3ed';
+        ctx.font = '700 46px Georgia, "Times New Roman", serif';
+        ctx.fillText(currentGoal.title, padX, 404);
+
+        ctx.fillStyle = 'rgba(243, 241, 235, 0.72)';
+        ctx.font = '400 19px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+        ctx.fillText(currentGoal.desc.slice(0, 88), padX, 444);
+
+        ctx.strokeStyle = 'rgba(243, 241, 235, 0.18)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padX, 488);
+        ctx.lineTo(W - padX, 488);
+        ctx.stroke();
+
+        const cols = [
+            { label: 'RESULT', value: currentGoal.getLabel(), x: padX },
+            { label: 'STREAK', value: String(streak), x: padX + 340 },
+            { label: 'BEST', value: String(bestStreak), x: padX + 510 }
+        ];
+        cols.forEach((c) => {
+            ctx.fillStyle = 'rgba(243, 241, 235, 0.5)';
+            ctx.font = '600 12px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+            ctx.fillText(c.label, c.x, 520);
+            ctx.fillStyle = '#f5f3ed';
+            ctx.font = '600 22px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+            ctx.fillText(c.value, c.x, 550);
+        });
+
+        const host = window.location.host || GAME_SLUG;
+        ctx.textAlign = 'right';
+        ctx.fillStyle = 'rgba(243, 241, 235, 0.45)';
+        ctx.font = '400 14px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+        ctx.fillText(host, W - padX, 550);
+        ctx.textAlign = 'left';
+
+        const safeName = (playerName || 'player').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'player';
+        const filename = `${GAME_SLUG}-${safeName}-scorecard.png`;
+
+        const triggerDownload = (url, revoke) => {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            if (revoke) setTimeout(() => URL.revokeObjectURL(url), 1000);
+        };
+
+        if (canvas.toBlob) {
+            canvas.toBlob(blob => {
+                if (blob) triggerDownload(URL.createObjectURL(blob), true);
+                else triggerDownload(canvas.toDataURL('image/png'), false);
+            }, 'image/png');
+        } else {
+            triggerDownload(canvas.toDataURL('image/png'), false);
+        }
+
+        if (dlResetId) clearTimeout(dlResetId);
+        els.downloadBtn.innerHTML = `${ICONS.check}<span>Saved</span>`;
+        dlResetId = setTimeout(() => {
+            els.downloadBtn.innerHTML = `${ICONS.download}<span>Card</span>`;
+            dlResetId = null;
+        }, 1800);
+    }
 
     function setCollapsed(val) {
         collapsed = !!val;
@@ -324,6 +478,10 @@
         stopLoop();
         status = 'won';
         streak++;
+        if (streak > bestStreak) {
+            bestStreak = streak;
+            localStorage.setItem(BEST_KEY, String(bestStreak));
+        }
         collapsed = false;
         playWinChime();
         render();
@@ -359,6 +517,7 @@
         els.title.textContent = currentGoal.title;
         els.desc.textContent = currentGoal.desc;
         els.streak.textContent = String(streak);
+        els.best.textContent = bestStreak > 0 ? `· Best ${bestStreak}` : '';
 
         const progress = Math.min(currentGoal.getProgress(), currentGoal.target);
         const pct = currentGoal.target > 0 ? Math.min(100, (progress / currentGoal.target) * 100) : 0;
@@ -390,15 +549,19 @@
         if (status === 'won') {
             els.banner.innerHTML = `${ICONS.check}<span>Completed</span>`;
             els.retryBtn.style.display = 'none';
+            els.downloadBtn.style.display = 'inline-flex';
+            if (!dlResetId) els.downloadBtn.innerHTML = `${ICONS.download}<span>Card</span>`;
             els.newBtn.innerHTML = `<span>Next Goal</span>${ICONS.arrowRight}`;
             els.newBtn.classList.add('is-primary');
         } else if (status === 'failed') {
             els.retryBtn.style.display = 'inline-flex';
+            els.downloadBtn.style.display = 'none';
             els.newBtn.innerHTML = `${ICONS.shuffle}<span>New Goal</span>`;
             els.newBtn.classList.remove('is-primary');
         } else {
             els.banner.innerHTML = '';
             els.retryBtn.style.display = 'none';
+            els.downloadBtn.style.display = 'none';
             els.newBtn.innerHTML = `${ICONS.shuffle}<span>New Goal</span>`;
             els.newBtn.classList.remove('is-primary');
         }

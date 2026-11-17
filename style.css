@@ -196,22 +196,3 @@ main {
     max-width: min(100%, 420px);
     height: auto;
 }
-
-.footer {
-    margin-top: 10px;
-    padding: 0 0 40px 0;
-    text-align: center;
-    font-size: 16px;
-    font-weight: 300;
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.footer a {
-    color: #ffffff;
-    text-decoration: none;
-    font-weight: 400;
-}
-
-.footer a:hover {
-    text-decoration: underline;
-}

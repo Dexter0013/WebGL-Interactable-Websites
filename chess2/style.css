@@ -47,13 +47,6 @@ canvas {
     touch-action: auto;
 }
 
-.credit-link-container {
-    bottom: 15px;
-    left: 15px;
-    flex-direction: row;
-    gap: 6px;
-}
-
 .top-left {
     top: max(14px, env(safe-area-inset-top));
     left: max(14px, env(safe-area-inset-left));
@@ -147,20 +140,6 @@ canvas {
         width: 19px;
         height: 19px;
     }
-}
-
-.credit-link-container a {
-    color: inherit;
-    text-decoration: none;
-    transition: color 0.2s ease;
-}
-
-.credit-link-container a:hover {
-    color: #ffffff;
-}
-
-.credit-link-container .separator {
-    opacity: 0.5;
 }
 
 .mute-pill {
