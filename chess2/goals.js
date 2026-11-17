@@ -115,6 +115,7 @@
     ];
 
     function playWinChime() {
+        if (window.__gameMuted) return;
         try {
             const Ctx = window.AudioContext || window.webkitAudioContext;
             if (!Ctx) return;
@@ -342,7 +343,7 @@
         els.miniPill.innerHTML = `${ICONS.target}<span>${currentGoal.title}: ${currentGoal.getShort()}${shortLimit}</span>`;
 
         if (status === 'won') {
-            els.banner.innerHTML = `${ICONS.check}<span>GOAL COMPLETE!</span>`;
+            els.banner.innerHTML = `${ICONS.check}<span>Completed</span>`;
             els.retryBtn.style.display = 'none';
             els.newBtn.innerHTML = `<span>Next Goal</span>${ICONS.arrowRight}`;
             els.newBtn.classList.add('is-primary');
@@ -407,6 +408,29 @@
             if (e.detail.setupPending === 0) evaluate();
         }
     });
+
+    const muteToggle = document.getElementById('mute-toggle');
+    if (muteToggle) {
+        let isMuted = false;
+        const mutePill = muteToggle.closest('.mute-pill') || muteToggle;
+        ['pointerdown', 'pointerup', 'mousedown', 'touchstart'].forEach(evt => {
+            mutePill.addEventListener(evt, e => e.stopPropagation());
+        });
+        muteToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            isMuted = !isMuted;
+            window.__gameMuted = isMuted;
+            muteToggle.classList.toggle('muted', isMuted);
+            muteToggle.setAttribute('aria-pressed', String(isMuted));
+            if (typeof PIXI !== 'undefined' && PIXI.sound) {
+                if (isMuted) PIXI.sound.muteAll();
+                else PIXI.sound.unmuteAll();
+            }
+            if (window.__chess2BgAudio) {
+                window.__chess2BgAudio.muted = isMuted;
+            }
+        });
+    }
 
     if (mode === 'challenge') startGoal();
     else render();

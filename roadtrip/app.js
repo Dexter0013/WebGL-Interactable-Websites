@@ -553,7 +553,7 @@ async function setup() {
     };
 
     window.addEventListener('pointerdown', (e) => {
-        if (e.target && e.target.closest && e.target.closest('#goal-hud')) return;
+        if (e.target && e.target.closest && e.target.closest('#goal-hud, .mute-pill')) return;
         resumeAudio();
         isPointerDown = true;
         const localPos = worldContainer.toLocal(new PIXI.Point(e.clientX, e.clientY));

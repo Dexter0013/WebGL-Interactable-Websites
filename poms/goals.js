@@ -334,7 +334,7 @@
         els.miniPill.innerHTML = `${ICONS.target}<span>${currentGoal.title}: ${currentGoal.getShort()}${shortLimit}</span>`;
 
         if (status === 'won') {
-            els.banner.innerHTML = `${ICONS.check}<span>GOAL COMPLETE!</span>`;
+            els.banner.innerHTML = `${ICONS.check}<span>Completed</span>`;
             els.retryBtn.style.display = 'none';
             els.newBtn.innerHTML = `<span>Next Goal</span>${ICONS.arrowRight}`;
             els.newBtn.classList.add('is-primary');

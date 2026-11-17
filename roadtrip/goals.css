@@ -147,8 +147,8 @@
 }
 
 .goal-mini-pill.is-won {
-    border-color: var(--goal-win);
-    color: var(--goal-win);
+    border-color: rgba(255, 255, 255, 0.24);
+    color: rgba(255, 255, 255, 0.92);
 }
 
 .goal-mini-pill.is-failed {
@@ -161,7 +161,7 @@
 }
 
 .goal-mini-pill.is-won .goal-icon {
-    color: var(--goal-win);
+    color: rgba(255, 255, 255, 0.78);
 }
 
 .goal-mini-pill.is-failed .goal-icon {
@@ -192,13 +192,13 @@
 }
 
 .goal-card.is-won {
-    border-color: var(--goal-win);
-    box-shadow: 0 0 26px rgba(104, 233, 144, 0.3);
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.46);
 }
 
 .goal-card.is-failed {
-    border-color: var(--goal-fail);
-    box-shadow: 0 0 22px rgba(255, 123, 107, 0.26);
+    border-color: rgba(255, 123, 107, 0.45);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.46);
 }
 
 .goal-header {
@@ -232,7 +232,7 @@
 
 .goal-card.is-won .goal-title,
 .goal-card.is-won .goal-title-wrap .goal-icon {
-    color: var(--goal-win);
+    color: rgba(255, 255, 255, 0.88);
 }
 
 .goal-card.is-failed .goal-title,
@@ -284,7 +284,7 @@
 }
 
 .goal-card.is-won .goal-progress-fill {
-    background: var(--goal-win);
+    background: rgba(255, 255, 255, 0.55);
 }
 
 .goal-card.is-failed .goal-progress-fill {
@@ -315,9 +315,9 @@
 
 .goal-banner {
     font-size: var(--goal-fs-meta);
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    padding: 6px 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 5px 10px;
     border-radius: 8px;
     display: none;
     align-items: center;
@@ -327,13 +327,13 @@
 
 .goal-card.is-won .goal-banner {
     display: flex;
-    background: rgba(104, 233, 144, 0.16);
-    color: var(--goal-win);
+    background: rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.82);
 }
 
 .goal-card.is-failed .goal-banner {
     display: flex;
-    background: rgba(255, 123, 107, 0.16);
+    background: rgba(255, 123, 107, 0.12);
     color: var(--goal-fail);
 }
 
@@ -371,13 +371,14 @@
 }
 
 .goal-action-btn.is-primary {
-    background: var(--goal-win);
-    border-color: var(--goal-win);
-    color: #0e1611;
+    background: #2e9e5b;
+    border-color: #2e9e5b;
+    color: #ffffff;
 }
 
 .goal-action-btn.is-primary:hover {
-    filter: brightness(1.08);
+    background: #35b267;
+    border-color: #35b267;
 }
 
 @media (max-width: 600px) {
@@ -477,5 +478,87 @@
 
     .goal-progress-track {
         height: 8px;
+    }
+}
+
+.mute-pill {
+    position: fixed;
+    bottom: max(15px, env(safe-area-inset-bottom));
+    left: max(15px, env(safe-area-inset-left));
+    z-index: 9998;
+    color: #c8bc72;
+    background: rgba(12, 12, 14, 0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    touch-action: auto;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.38);
+}
+
+.mute-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    line-height: 1;
+    transition: opacity 0.2s ease, transform 0.15s ease;
+    color: inherit;
+}
+
+.mute-toggle svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+}
+
+.mute-toggle .icon-sound-off {
+    display: none;
+}
+
+.mute-toggle.muted .icon-sound-on {
+    display: none;
+}
+
+.mute-toggle.muted .icon-sound-off {
+    display: block;
+}
+
+.mute-toggle:hover {
+    opacity: 0.8;
+}
+
+.mute-toggle:active {
+    transform: scale(0.94);
+}
+
+.mute-toggle.muted {
+    opacity: 0.65;
+}
+
+@media (min-width: 1600px) {
+    .mute-pill {
+        bottom: 22px;
+        left: 22px;
+    }
+
+    .mute-toggle {
+        width: 46px;
+        height: 46px;
+    }
+
+    .mute-toggle svg {
+        width: 21px;
+        height: 21px;
     }
 }

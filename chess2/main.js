@@ -636,6 +636,8 @@ async function init() {
             bgAudio = new Audio('assets/sounds/bg.mp3');
             bgAudio.loop = true;
             bgAudio.volume = 0.5;
+            bgAudio.muted = !!window.__gameMuted;
+            window.__chess2BgAudio = bgAudio;
             bgAudio.play().catch(err => console.error("Error playing BG music:", err));
         }
 

@@ -147,8 +147,8 @@
 }
 
 .goal-mini-pill.is-won {
-    border-color: var(--goal-win);
-    color: var(--goal-win);
+    border-color: rgba(255, 255, 255, 0.24);
+    color: rgba(255, 255, 255, 0.92);
 }
 
 .goal-mini-pill.is-failed {
@@ -161,7 +161,7 @@
 }
 
 .goal-mini-pill.is-won .goal-icon {
-    color: var(--goal-win);
+    color: rgba(255, 255, 255, 0.78);
 }
 
 .goal-mini-pill.is-failed .goal-icon {
@@ -192,13 +192,13 @@
 }
 
 .goal-card.is-won {
-    border-color: var(--goal-win);
-    box-shadow: 0 0 26px rgba(104, 233, 144, 0.3);
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
 }
 
 .goal-card.is-failed {
-    border-color: var(--goal-fail);
-    box-shadow: 0 0 22px rgba(255, 123, 107, 0.26);
+    border-color: rgba(255, 123, 107, 0.45);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
 }
 
 .goal-header {
@@ -232,7 +232,7 @@
 
 .goal-card.is-won .goal-title,
 .goal-card.is-won .goal-title-wrap .goal-icon {
-    color: var(--goal-win);
+    color: rgba(255, 255, 255, 0.88);
 }
 
 .goal-card.is-failed .goal-title,
@@ -293,9 +293,9 @@
 }
 
 .goal-chip.is-done {
-    background: rgba(104, 233, 144, 0.2);
-    border-color: var(--goal-win);
-    color: var(--goal-win);
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.32);
+    color: rgba(255, 255, 255, 0.94);
 }
 
 .goal-progress-track {
@@ -315,7 +315,7 @@
 }
 
 .goal-card.is-won .goal-progress-fill {
-    background: var(--goal-win);
+    background: rgba(255, 255, 255, 0.55);
 }
 
 .goal-card.is-failed .goal-progress-fill {
@@ -346,9 +346,9 @@
 
 .goal-banner {
     font-size: var(--goal-fs-meta);
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    padding: 6px 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 5px 10px;
     border-radius: 8px;
     display: none;
     align-items: center;
@@ -358,13 +358,13 @@
 
 .goal-card.is-won .goal-banner {
     display: flex;
-    background: rgba(104, 233, 144, 0.16);
-    color: var(--goal-win);
+    background: rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.82);
 }
 
 .goal-card.is-failed .goal-banner {
     display: flex;
-    background: rgba(255, 123, 107, 0.16);
+    background: rgba(255, 123, 107, 0.12);
     color: var(--goal-fail);
 }
 
@@ -402,13 +402,14 @@
 }
 
 .goal-action-btn.is-primary {
-    background: var(--goal-win);
-    border-color: var(--goal-win);
-    color: #0e1611;
+    background: #2e9e5b;
+    border-color: #2e9e5b;
+    color: #ffffff;
 }
 
 .goal-action-btn.is-primary:hover {
-    filter: brightness(1.08);
+    background: #35b267;
+    border-color: #35b267;
 }
 
 @media (max-width: 600px) {
