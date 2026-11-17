@@ -77,20 +77,6 @@ const toys = [
         description: "Summon explosive pomeranians running at full speed by tapping or typing. Pairs nicely with heavy metal.",
         videoSrc: "assets/poms.mp4",
         url: "/poms/"
-    },
-    {
-        title: "Five Penguins",
-        description: "Majestic penguin visualizer that you can sync to music.",
-        videoSrc: "assets/5p.mp4",
-        url: "https://fivepenguins.party",
-        desktopOnly: true
-    },
-    {
-        title: "shapiro500",
-        description: "Need some background visuals for a party? This VJ tool displays dozens of playful 3D animations forever. Change the tempo, sync to music.",
-        videoSrc: "assets/shapiro500.mp4",
-        url: "https://shapiro500.com",
-        desktopOnly: true
     }
 ];
 

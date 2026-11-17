@@ -379,6 +379,9 @@ async function init() {
             } else if (!isWave) {
                 PIXI.sound.play('capture');
             }
+            window.dispatchEvent(new CustomEvent('chess2:capture', {
+                detail: { color: this.color, type: this.type, isWave }
+            }));
         }
 
         promote(isWave = false, targetType = null, isInitial = false) {
@@ -428,6 +431,11 @@ async function init() {
                 // or maybe just play regular promote sound. 
                 // Given the request, just skip the 'check' branch.
                 PIXI.sound.play('promote');
+            }
+            if (!isInitial) {
+                window.dispatchEvent(new CustomEvent('chess2:promote', {
+                    detail: { color: this.color, type: this.type, isWave }
+                }));
             }
         }
 
@@ -594,6 +602,9 @@ async function init() {
     }
 
     function startKingWave(king, action) {
+        window.dispatchEvent(new CustomEvent('chess2:kingwave', {
+            detail: { color: king.color, action }
+        }));
         for (const p of activePieces) {
             // Exclude pieces that are currently in the air (thrown), captured, or already hidden.
             // This prevents pieces from being "resurrected" if they were just captured.
@@ -653,9 +664,11 @@ async function init() {
 
         // Spawn immediately on click
         const boardPos = screenToBoardSpace(mousePos.x, mousePos.y);
-        spawnPiece(boardPos.x, boardPos.y, nextColor);
+        const thrownColor = nextColor;
+        spawnPiece(boardPos.x, boardPos.y, thrownColor);
         nextColor = nextColor === 'white' ? 'black' : 'white';
         lastSpawnTick = masterTick;
+        window.dispatchEvent(new CustomEvent('chess2:throw', { detail: { color: thrownColor } }));
         updateStatsUI();
     });
 
@@ -749,13 +762,17 @@ async function init() {
                 }
             }
         }
+        window.dispatchEvent(new CustomEvent('chess2:stats', {
+            detail: { counts, setupPending: setupQueue.length }
+        }));
     }
+
+    const setupQueue = [];
 
     // Initial stats setup and update
     initStatsUI();
     updateStatsUI();
 
-    const setupQueue = [];
     function setupInitialBoard(colorFilter = null) {
         const backRank = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
         const newPieces = [];
@@ -839,9 +856,11 @@ async function init() {
 
             if (canContinuousSpawn && (masterTick - lastSpawnTick) >= SPAWN_INTERVAL) {
                 const boardPos = screenToBoardSpace(mousePos.x, mousePos.y);
-                spawnPiece(boardPos.x, boardPos.y, nextColor);
+                const thrownColor = nextColor;
+                spawnPiece(boardPos.x, boardPos.y, thrownColor);
                 nextColor = nextColor === 'white' ? 'black' : 'white';
                 lastSpawnTick = masterTick;
+                window.dispatchEvent(new CustomEvent('chess2:throw', { detail: { color: thrownColor } }));
                 pieceChangedThisFrame = true;
             }
 

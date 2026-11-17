@@ -277,6 +277,7 @@
     if (muteToggle) {
         muteToggle.addEventListener('click', () => {
             isMuted = !isMuted;
+            muteToggle.setAttribute('aria-pressed', String(isMuted));
             if (isMuted) {
                 PIXI.sound.muteAll();
                 muteToggle.classList.add('muted');
@@ -735,11 +736,13 @@
     function resize() {
         const windowWidth = window.innerWidth;
         const windowHeight = window.innerHeight;
-        const scale = windowHeight / BG_HEIGHT;
+        const minPlayableWidth = 1040;
+        const scale = Math.min(windowHeight / BG_HEIGHT, windowWidth / minPlayableWidth);
         mainContainer.scale.set(scale);
         const scaledWidth = BG_WIDTH * scale;
+        const scaledHeight = BG_HEIGHT * scale;
         mainContainer.x = (windowWidth - scaledWidth) / 2;
-        mainContainer.y = 0;
+        mainContainer.y = (windowHeight - scaledHeight) / 2;
     }
 
     window.addEventListener('resize', resize);

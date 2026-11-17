@@ -221,6 +221,11 @@ function spawnPair(t, charKey) {
             if (!activeSprites.includes(sprite)) activeSprites.push(sprite);
         }
     });
+
+    const activePoms = activeSprites.filter(s => s.visible && !s.isShockwave).length;
+    window.dispatchEvent(new CustomEvent('poms:spawn', {
+        detail: { t: Math.max(0, Math.min(1, t)), charKey, activePoms }
+    }));
 }
 
 function getSpriteFromPool(textureKey, isShockwave = false) {

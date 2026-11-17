@@ -43,10 +43,13 @@ body {
 }
 
 .credit-link-container {
-    bottom: 15px;
-    left: 15px;
+    bottom: max(15px, env(safe-area-inset-bottom));
+    left: max(15px, env(safe-area-inset-left));
     flex-direction: row;
     gap: 6px;
+    padding: 0;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .credit-link-container a {
@@ -68,18 +71,60 @@ body {
     border: none;
     padding: 0;
     margin: 0;
-    font-size: 14px;
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     line-height: 1;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.2s ease, transform 0.15s ease;
     color: inherit;
 }
 
+.mute-toggle svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+}
+
+.mute-toggle .icon-sound-off {
+    display: none;
+}
+
+.mute-toggle.muted .icon-sound-on {
+    display: none;
+}
+
+.mute-toggle.muted .icon-sound-off {
+    display: block;
+}
+
 .mute-toggle:hover {
-    opacity: 0.7;
+    opacity: 0.8;
+}
+
+.mute-toggle:active {
+    transform: scale(0.94);
 }
 
 .mute-toggle.muted {
-    text-decoration: line-through;
-    opacity: 0.6;
+    opacity: 0.65;
+}
+
+@media (min-width: 1600px) {
+    .credit-link-container {
+        bottom: 22px;
+        left: 22px;
+    }
+
+    .mute-toggle {
+        width: 46px;
+        height: 46px;
+    }
+
+    .mute-toggle svg {
+        width: 21px;
+        height: 21px;
+    }
 }

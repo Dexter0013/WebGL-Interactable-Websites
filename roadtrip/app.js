@@ -419,6 +419,7 @@ async function setup() {
         const candidateScale = (0.2 + candidateT * 0.8) * BASE_CAR_SCALE;
 
         let foundValidSpot = false;
+        let dodgedCow = false;
         const NEARBY_X = 600;
 
         // Phase 1: Try pushing away from cows near the intended target (Shortened)
@@ -444,6 +445,7 @@ async function setup() {
                     if (spawnX < cow.x) spawnX = cow.x - (totalWidth + pushGap);
                     else spawnX = cow.x + (totalWidth + pushGap);
                     collisionFound = true;
+                    dodgedCow = true;
                     break;
                 }
             }
@@ -513,7 +515,13 @@ async function setup() {
         cars.push(carContainer);
         carContainer.isFinished = false;
         carContainer.shakeTriggered = false;
+        carContainer.depthT = t;
+        carContainer.dodgedCow = dodgedCow;
         carContainer.shakeMult = SHAKE_SETTINGS.minDistanceMultiplier + (t * (1.0 - SHAKE_SETTINGS.minDistanceMultiplier));
+
+        window.dispatchEvent(new CustomEvent('roadtrip:spawn', {
+            detail: { dodgedCow, depthT: t, activeCars: cars.length }
+        }));
 
         if (SHOW_DEBUG_BOUNDS) {
             drawDebugBox(carContainer, HITBOXES.car.w, HITBOXES.car.t, HITBOXES.car.b, 0x0000FF);
@@ -545,6 +553,7 @@ async function setup() {
     };
 
     window.addEventListener('pointerdown', (e) => {
+        if (e.target && e.target.closest && e.target.closest('#goal-hud')) return;
         resumeAudio();
         isPointerDown = true;
         const localPos = worldContainer.toLocal(new PIXI.Point(e.clientX, e.clientY));
@@ -758,6 +767,13 @@ async function setup() {
                         // Pass the distance multiplier to the shake instance
                         activeShakes.push({ remaining: SHAKE_SETTINGS.duration, mult: carCont.shakeMult });
                         carCont.shakeTriggered = true;
+                        window.dispatchEvent(new CustomEvent('roadtrip:crash', {
+                            detail: {
+                                activeCars: cars.length,
+                                depthT: carCont.depthT ?? 0.5,
+                                dodgedCow: !!carCont.dodgedCow
+                            }
+                        }));
 
                         // --- PLAY RANDOM CRASH SOUND ---
                         if (typeof PIXI !== 'undefined' && PIXI.sound) {

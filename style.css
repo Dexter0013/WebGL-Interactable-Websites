@@ -20,7 +20,7 @@ body {
     background-color: var(--bg-color);
     color: var(--text-color);
     font-family: var(--font-main);
-    padding: 80px 40px;
+    padding: clamp(32px, 6vw, 88px) clamp(16px, 4vw, 48px);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -29,8 +29,9 @@ body {
 
 .header {
     text-align: center;
-    margin-bottom: 80px;
+    margin-bottom: clamp(36px, 6vw, 84px);
     width: 100%;
+    max-width: 1360px;
 }
 
 .intro-copy {
@@ -48,11 +49,17 @@ body {
     letter-spacing: -2px;
 }
 
+main {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
 .toy-grid {
     display: grid;
-    grid-template-columns: repeat(var(--grid-columns), 1fr);
+    grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
     gap: var(--gap);
-    max-width: 1000px;
+    max-width: 1080px;
     width: 100%;
 }
 
@@ -101,11 +108,53 @@ body {
     line-height: 1.4;
 }
 
-@media (max-width: 900px) {
+@media (min-width: 1400px) {
+    :root {
+        --grid-columns: 3;
+        --gap: 44px;
+        --logo-size: 168px;
+        --intro-size: 26px;
+    }
+
+    .toy-grid {
+        max-width: 1380px;
+    }
+}
+
+@media (min-width: 2000px) {
+    :root {
+        --gap: 52px;
+        --logo-size: 196px;
+        --intro-size: 30px;
+    }
+
+    .toy-grid {
+        max-width: 1680px;
+    }
+
+    .toy-title {
+        font-size: 28px;
+    }
+
+    .toy-description {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 820px) {
     :root {
         --grid-columns: 1;
+        --gap: 28px;
         --logo-size: 84px;
         --intro-size: 18px;
+    }
+
+    .toy-title {
+        font-size: 20px;
+    }
+
+    .toy-description {
+        font-size: 14.5px;
     }
 
     .toy-item.is-desktop-only .video-container video,
@@ -137,13 +186,14 @@ body {
 }
 
 .flamingo-container {
-    margin-top: 100px;
+    margin-top: clamp(48px, 7vw, 100px);
     display: flex;
     justify-content: center;
     width: 100%;
 }
 
 .flamingo-squad {
+    max-width: min(100%, 420px);
     height: auto;
 }
 
